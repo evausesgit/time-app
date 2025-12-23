@@ -102,25 +102,25 @@ body {
 .timers-grid {
     margin-top: 100px;
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    gap: 30px;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 16px;
     padding: 20px;
 }
 
 /* Carte de timer */
 .timer-card {
     background: var(--surface);
-    border-radius: 20px;
-    padding: 30px;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    border-radius: 10px;
+    padding: 16px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
     transition: transform 0.3s, box-shadow 0.3s;
     position: relative;
     overflow: hidden;
 }
 
 .timer-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+    transform: translateY(-3px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
 }
 
 .timer-card::before {
@@ -129,30 +129,32 @@ body {
     top: 0;
     left: 0;
     right: 0;
-    height: 4px;
+    height: 2px;
     background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
 }
 
 .timer-header {
     display: flex;
-    justify-content: space-between;
+    flex-direction: column;
     align-items: center;
-    margin-bottom: 20px;
+    margin-bottom: 10px;
+    gap: 5px;
 }
 
 .timer-title {
-    font-size: 1.2rem;
+    font-size: 1rem;
     font-weight: 600;
     color: var(--text-primary);
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    flex: 1;
+    text-align: center;
+    width: 100%;
 }
 
 .timer-actions {
     display: flex;
-    gap: 8px;
+    gap: 4px;
 }
 
 .edit-button,
@@ -161,9 +163,9 @@ body {
     border: none;
     color: var(--text-secondary);
     cursor: pointer;
-    padding: 5px;
+    padding: 2px;
     transition: color 0.2s;
-    font-size: 1.2rem;
+    font-size: 0.6rem;
 }
 
 .edit-button:hover {
@@ -179,12 +181,12 @@ body {
     display: flex;
     justify-content: center;
     align-items: center;
-    margin: 20px 0;
+    margin: 10px 0;
 }
 
 .timer-circle {
-    width: 200px;
-    height: 200px;
+    width: 100px;
+    height: 100px;
 }
 
 .circle-bg {
@@ -204,7 +206,7 @@ body {
 }
 
 .circle-text {
-    font-size: 1.8rem;
+    font-size: 0.9rem;
     font-weight: bold;
     fill: var(--text-primary);
     text-anchor: middle;
@@ -212,7 +214,7 @@ body {
 }
 
 .circle-subtext {
-    font-size: 0.9rem;
+    font-size: 0.45rem;
     fill: var(--text-secondary);
     text-anchor: middle;
     dominant-baseline: middle;
@@ -237,22 +239,22 @@ body {
 /* Info du timer */
 .timer-info {
     text-align: center;
-    margin-top: 15px;
+    margin-top: 8px;
 }
 
 .timer-dates {
-    font-size: 0.85rem;
+    font-size: 0.42rem;
     color: var(--text-secondary);
-    margin-top: 8px;
+    margin-top: 4px;
 }
 
 .timer-status {
     display: inline-block;
-    padding: 5px 12px;
-    border-radius: 12px;
-    font-size: 0.8rem;
+    padding: 2px 6px;
+    border-radius: 6px;
+    font-size: 0.4rem;
     font-weight: 600;
-    margin-top: 10px;
+    margin-top: 4px;
 }
 
 .timer-status.active {

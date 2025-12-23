@@ -271,7 +271,7 @@ class TimeProgressApp {
                     />
                     <defs>
                         <filter id="shadow-${timer.id}" x="-50%" y="-50%" width="200%" height="200%">
-                            <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#6c5ce7" flood-opacity="0.8"/>
+                            <feDropShadow dx="0" dy="1" stdDeviation="1.5" flood-color="#6c5ce7" flood-opacity="0.8"/>
                         </filter>
                     </defs>
                     <text class="circle-text" x="100" y="95">${Math.round(progress.percentage)}%</text>
