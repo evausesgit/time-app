@@ -14,6 +14,7 @@ class Timer {
         this.refreshRate = parseInt(data.refreshRate) || 1000;
         this.intervalId = null;
         this.userId = data.userId || auth.currentUser?.uid;
+        this.position = data.position !== undefined ? data.position : 999999;
     }
 
     getProgress() {
@@ -103,7 +104,8 @@ class Timer {
             endDate: this.endDate.toISOString(),
             granularity: this.granularity,
             refreshRate: this.refreshRate,
-            userId: this.userId
+            userId: this.userId,
+            position: this.position
         };
     }
 }
@@ -120,6 +122,7 @@ class TimeProgressApp {
         this.registerServiceWorker();
         this.setDefaultDates();
         this.setupRealtimeListener();
+        this.setupDragAndDrop();
     }
 
     initElements() {
@@ -213,6 +216,11 @@ class TimeProgressApp {
             await updateDoc(doc(db, 'timers', this.editingTimerId), timerData);
         } else {
             // Mode ajout - Firestore
+            // Assigner une position pour le nouveau timer (à la fin)
+            const maxPosition = this.timers.length > 0
+                ? Math.max(...this.timers.map(t => t.position))
+                : -1;
+            timerData.position = maxPosition + 1;
             await addDoc(collection(db, 'timers'), timerData);
         }
 
@@ -399,8 +407,13 @@ class TimeProgressApp {
             data.id = docSnapshot.id;
             const timer = new Timer(data);
             this.timers.push(timer);
-            this.renderTimer(timer);
         });
+
+        // Trier par position avant de rendre
+        this.timers.sort((a, b) => a.position - b.position);
+
+        // Rendre les timers dans l'ordre
+        this.timers.forEach(timer => this.renderTimer(timer));
 
         this.checkEmptyState();
     }
@@ -475,6 +488,34 @@ class TimeProgressApp {
                     console.log('Erreur Service Worker:', error);
                 });
         }
+    }
+
+    setupDragAndDrop() {
+        // Initialiser SortableJS sur la grille de timers
+        const sortable = Sortable.create(this.timersGrid, {
+            animation: 150,
+            handle: '.timer-card',
+            ghostClass: 'sortable-ghost',
+            onEnd: async (evt) => {
+                // Récupérer le nouvel ordre
+                const cards = this.timersGrid.querySelectorAll('.timer-card');
+                const updates = [];
+
+                cards.forEach((card, index) => {
+                    const timerId = card.dataset.timerId;
+                    const timer = this.timers.find(t => t.id === timerId);
+                    if (timer) {
+                        timer.position = index;
+                        // Mettre à jour dans Firestore
+                        updates.push(updateDoc(doc(db, 'timers', timerId), { position: index }));
+                    }
+                });
+
+                // Sauvegarder toutes les positions en parallèle
+                await Promise.all(updates);
+                console.log('Positions sauvegardées');
+            }
+        });
     }
 }
 

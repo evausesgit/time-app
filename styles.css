@@ -518,3 +518,10 @@ body {
 .flatpickr-months .flatpickr-next-month:hover svg {
     fill: rgba(255, 255, 255, 0.8) !important;
 }
+
+/* Drag and drop */
+.sortable-ghost {
+    opacity: 0.4;
+    background: var(--primary-color);
+    transform: scale(1.05);
+}
