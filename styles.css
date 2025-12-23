@@ -403,3 +403,77 @@ body {
 .empty-state p {
     font-size: 1rem;
 }
+
+/* Flatpickr personnalisé */
+.flatpickr-calendar {
+    background: var(--surface) !important;
+    border: 2px solid rgba(108, 92, 231, 0.3) !important;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5) !important;
+    border-radius: 15px !important;
+}
+
+.flatpickr-months {
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color)) !important;
+    border-radius: 15px 15px 0 0 !important;
+}
+
+.flatpickr-current-month .flatpickr-monthDropdown-months,
+.flatpickr-current-month .numInputWrapper input {
+    color: white !important;
+    font-weight: 600 !important;
+}
+
+.flatpickr-weekday {
+    color: var(--text-secondary) !important;
+    font-weight: 600 !important;
+}
+
+.flatpickr-day {
+    color: var(--text-primary) !important;
+    border-radius: 8px !important;
+}
+
+.flatpickr-day:hover {
+    background: rgba(108, 92, 231, 0.3) !important;
+    border-color: var(--primary-color) !important;
+}
+
+.flatpickr-day.selected {
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color)) !important;
+    border-color: var(--primary-color) !important;
+    color: white !important;
+}
+
+.flatpickr-day.today {
+    border-color: var(--primary-color) !important;
+}
+
+.flatpickr-time {
+    border-top: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+.flatpickr-time input {
+    color: var(--text-primary) !important;
+    background: transparent !important;
+    font-weight: 600 !important;
+}
+
+.flatpickr-time input:hover,
+.flatpickr-time input:focus {
+    background: rgba(108, 92, 231, 0.2) !important;
+}
+
+.flatpickr-time .flatpickr-time-separator,
+.flatpickr-time .flatpickr-am-pm {
+    color: var(--text-primary) !important;
+}
+
+.flatpickr-months .flatpickr-prev-month svg,
+.flatpickr-months .flatpickr-next-month svg {
+    fill: white !important;
+}
+
+.flatpickr-months .flatpickr-prev-month:hover svg,
+.flatpickr-months .flatpickr-next-month:hover svg {
+    fill: rgba(255, 255, 255, 0.8) !important;
+}

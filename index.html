@@ -7,6 +7,8 @@
     <meta name="description" content="Visualisez le temps qui passe avec des cercles de progression">
     <title>Time Progress App</title>
     <link rel="manifest" href="manifest.json">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/themes/dark.css">
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -34,26 +36,14 @@
                     <input type="text" id="title" required placeholder="Ex: Projet deadline">
                 </div>
 
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="startDate">Date de début</label>
-                        <input type="date" id="startDate" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="startTime">Heure de début</label>
-                        <input type="time" id="startTime" required>
-                    </div>
+                <div class="form-group">
+                    <label for="startDateTime">Date et heure de début</label>
+                    <input type="text" id="startDateTime" required placeholder="Sélectionnez date et heure">
                 </div>
 
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="endDate">Date de fin</label>
-                        <input type="date" id="endDate" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="endTime">Heure de fin</label>
-                        <input type="time" id="endTime" required>
-                    </div>
+                <div class="form-group">
+                    <label for="endDateTime">Date et heure de fin</label>
+                    <input type="text" id="endDateTime" required placeholder="Sélectionnez date et heure">
                 </div>
 
                 <div class="form-row">
@@ -86,6 +76,8 @@
         </div>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/fr.js"></script>
     <script src="app.js"></script>
 </body>
 </html>

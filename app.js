@@ -121,23 +121,37 @@ class TimeProgressApp {
         this.timersGrid = document.getElementById('timersGrid');
 
         this.titleInput = document.getElementById('title');
-        this.startDateInput = document.getElementById('startDate');
-        this.startTimeInput = document.getElementById('startTime');
-        this.endDateInput = document.getElementById('endDate');
-        this.endTimeInput = document.getElementById('endTime');
+        this.startDateTimeInput = document.getElementById('startDateTime');
+        this.endDateTimeInput = document.getElementById('endDateTime');
         this.granularityInput = document.getElementById('granularity');
         this.refreshRateInput = document.getElementById('refreshRate');
+
+        // Initialiser Flatpickr pour les date pickers
+        flatpickr.localize(flatpickr.l10ns.fr);
+
+        this.startPicker = flatpickr(this.startDateTimeInput, {
+            enableTime: true,
+            dateFormat: "d/m/Y H:i",
+            time_24hr: true,
+            locale: "fr",
+            defaultDate: new Date()
+        });
+
+        this.endPicker = flatpickr(this.endDateTimeInput, {
+            enableTime: true,
+            dateFormat: "d/m/Y H:i",
+            time_24hr: true,
+            locale: "fr",
+            defaultDate: new Date(Date.now() + 24 * 60 * 60 * 1000)
+        });
     }
 
     setDefaultDates() {
         const now = new Date();
         const tomorrow = new Date(now.getTime() + 24 * 60 * 60 * 1000);
 
-        this.startDateInput.valueAsDate = now;
-        this.startTimeInput.value = now.toTimeString().slice(0, 5);
-
-        this.endDateInput.valueAsDate = tomorrow;
-        this.endTimeInput.value = now.toTimeString().slice(0, 5);
+        this.startPicker.setDate(now);
+        this.endPicker.setDate(tomorrow);
     }
 
     attachEventListeners() {
@@ -168,13 +182,18 @@ class TimeProgressApp {
     handleSubmit(e) {
         e.preventDefault();
 
-        const startDateTime = `${this.startDateInput.value}T${this.startTimeInput.value}`;
-        const endDateTime = `${this.endDateInput.value}T${this.endTimeInput.value}`;
+        const startDate = this.startPicker.selectedDates[0];
+        const endDate = this.endPicker.selectedDates[0];
+
+        if (!startDate || !endDate) {
+            alert('Veuillez sélectionner les dates de début et de fin');
+            return;
+        }
 
         const timerData = {
             title: this.titleInput.value,
-            startDate: startDateTime,
-            endDate: endDateTime,
+            startDate: startDate.toISOString(),
+            endDate: endDate.toISOString(),
             granularity: this.granularityInput.value,
             refreshRate: this.refreshRateInput.value
         };
@@ -349,11 +368,8 @@ class TimeProgressApp {
         const startDate = new Date(timer.startDate);
         const endDate = new Date(timer.endDate);
 
-        this.startDateInput.valueAsDate = startDate;
-        this.startTimeInput.value = startDate.toTimeString().slice(0, 5);
-
-        this.endDateInput.valueAsDate = endDate;
-        this.endTimeInput.value = endDate.toTimeString().slice(0, 5);
+        this.startPicker.setDate(startDate);
+        this.endPicker.setDate(endDate);
 
         this.granularityInput.value = timer.granularity;
         this.refreshRateInput.value = timer.refreshRate;
