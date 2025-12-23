@@ -38,16 +38,23 @@ self.addEventListener('activate', (event) => {
 
 // Stratégie de cache: Network First, fallback to Cache
 self.addEventListener('fetch', (event) => {
+  // Ignorer les requêtes non-HTTP (chrome-extension, etc.)
+  if (!event.request.url.startsWith('http')) {
+    return;
+  }
+
   event.respondWith(
     fetch(event.request)
       .then((response) => {
         // Clone la réponse car elle ne peut être consommée qu'une fois
         const responseClone = response.clone();
 
-        // Mise à jour du cache avec la nouvelle version
-        caches.open(CACHE_NAME).then((cache) => {
-          cache.put(event.request, responseClone);
-        });
+        // Mise à jour du cache avec la nouvelle version (seulement pour les requêtes locales)
+        if (event.request.url.startsWith(self.location.origin)) {
+          caches.open(CACHE_NAME).then((cache) => {
+            cache.put(event.request, responseClone);
+          });
+        }
 
         return response;
       })

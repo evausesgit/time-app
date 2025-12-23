@@ -1,7 +1,32 @@
-// Application avec Firebase Firestore
+// Ce fichier remplacera app.js une fois Firebase configuré
+// Il utilise Firestore au lieu de LocalStorage
 
-// Récupérer Firebase depuis window (sera initialisé après chargement)
-let db, auth, collection, addDoc, getDocs, doc, updateDoc, deleteDoc, query, where, onSnapshot;
+// Import Firestore (sera ajouté en haut du fichier HTML)
+const db = window.firebaseDb;
+const auth = window.firebaseAuth;
+
+// Imports Firestore via module (à ajouter dans index.html)
+let collection, addDoc, getDocs, doc, updateDoc, deleteDoc, query, where, onSnapshot;
+
+// Initialiser les imports Firestore
+import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js').then((firestore) => {
+    collection = firestore.collection;
+    addDoc = firestore.addDoc;
+    getDocs = firestore.getDocs;
+    doc = firestore.doc;
+    updateDoc = firestore.updateDoc;
+    deleteDoc = firestore.deleteDoc;
+    query = firestore.query;
+    where = firestore.where;
+    onSnapshot = firestore.onSnapshot;
+
+    // Lancer l'application une fois Firestore chargé
+    document.addEventListener('DOMContentLoaded', () => {
+        if (auth.currentUser) {
+            new TimeProgressApp();
+        }
+    });
+});
 
 // Classe pour gérer un timer individuel
 class Timer {
@@ -476,28 +501,4 @@ class TimeProgressApp {
                 });
         }
     }
-}
-
-// Initialiser l'application après le chargement de toutes les classes
-console.log('Initialisation de TimeProgressApp...');
-
-// Récupérer Firebase depuis window
-db = window.firebaseDb;
-auth = window.firebaseAuth;
-
-if (window.firestoreModules) {
-    ({ collection, addDoc, getDocs, doc, updateDoc, deleteDoc, query, where, onSnapshot } = window.firestoreModules);
-
-    if (auth && auth.currentUser) {
-        new TimeProgressApp();
-    } else {
-        console.log('En attente de l\'authentification...');
-        setTimeout(() => {
-            if (auth && auth.currentUser) {
-                new TimeProgressApp();
-            }
-        }, 500);
-    }
-} else {
-    console.error('Firestore modules not loaded');
 }

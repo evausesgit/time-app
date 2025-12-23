@@ -30,6 +30,45 @@ body {
     position: relative;
 }
 
+/* Header utilisateur */
+.app-header {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 100;
+}
+
+.user-info {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    background: var(--surface);
+    padding: 10px 20px;
+    border-radius: 50px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+}
+
+.user-info span {
+    color: var(--text-primary);
+    font-size: 0.9rem;
+}
+
+.logout-btn {
+    background: rgba(255, 255, 255, 0.1);
+    border: none;
+    color: var(--text-primary);
+    padding: 8px 16px;
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    transition: all 0.3s;
+}
+
+.logout-btn:hover {
+    background: var(--danger);
+    color: white;
+}
+
 /* Bouton d'ajout */
 .add-button {
     position: fixed;

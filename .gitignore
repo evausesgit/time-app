@@ -1,0 +1,14 @@
+# Firebase config (contient des credentials sensibles)
+# Décommentez cette ligne si vous ajoutez vos vraies credentials
+# firebase-config.js
+
+# Node modules (si vous utilisez npm)
+node_modules/
+
+# Fichiers temporaires
+.DS_Store
+*.log
+
+# Build files
+dist/
+build/

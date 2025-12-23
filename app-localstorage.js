@@ -1,8 +1,3 @@
-// Application avec Firebase Firestore
-
-// Récupérer Firebase depuis window (sera initialisé après chargement)
-let db, auth, collection, addDoc, getDocs, doc, updateDoc, deleteDoc, query, where, onSnapshot;
-
 // Classe pour gérer un timer individuel
 class Timer {
     constructor(data) {
@@ -13,7 +8,6 @@ class Timer {
         this.granularity = data.granularity || 'seconds';
         this.refreshRate = parseInt(data.refreshRate) || 1000;
         this.intervalId = null;
-        this.userId = data.userId || auth.currentUser?.uid;
     }
 
     getProgress() {
@@ -102,8 +96,7 @@ class Timer {
             startDate: this.startDate.toISOString(),
             endDate: this.endDate.toISOString(),
             granularity: this.granularity,
-            refreshRate: this.refreshRate,
-            userId: this.userId
+            refreshRate: this.refreshRate
         };
     }
 }
@@ -113,13 +106,11 @@ class TimeProgressApp {
     constructor() {
         this.timers = [];
         this.editingTimerId = null;
-        this.userId = auth.currentUser.uid;
         this.initElements();
         this.loadTimers();
         this.attachEventListeners();
         this.registerServiceWorker();
         this.setDefaultDates();
-        this.setupRealtimeListener();
     }
 
     initElements() {
@@ -188,7 +179,7 @@ class TimeProgressApp {
         this.editingTimerId = null;
     }
 
-    async handleSubmit(e) {
+    handleSubmit(e) {
         e.preventDefault();
 
         const startDate = this.startPicker.selectedDates[0];
@@ -204,16 +195,39 @@ class TimeProgressApp {
             startDate: startDate.toISOString(),
             endDate: endDate.toISOString(),
             granularity: this.granularityInput.value,
-            refreshRate: this.refreshRateInput.value,
-            userId: this.userId
+            refreshRate: this.refreshRateInput.value
         };
 
         if (this.editingTimerId) {
-            // Mode édition - Firestore
-            await updateDoc(doc(db, 'timers', this.editingTimerId), timerData);
+            // Mode édition
+            const timerIndex = this.timers.findIndex(t => t.id === this.editingTimerId);
+            if (timerIndex !== -1) {
+                // Arrêter l'ancien timer
+                const oldTimer = this.timers[timerIndex];
+                if (oldTimer.intervalId) {
+                    clearInterval(oldTimer.intervalId);
+                }
+
+                // Conserver l'ID original
+                timerData.id = this.editingTimerId;
+                const updatedTimer = new Timer(timerData);
+                this.timers[timerIndex] = updatedTimer;
+
+                // Supprimer l'ancienne carte et créer la nouvelle
+                const oldCard = document.querySelector(`[data-timer-id="${this.editingTimerId}"]`);
+                if (oldCard) {
+                    oldCard.remove();
+                }
+
+                this.saveTimers();
+                this.renderTimer(updatedTimer);
+            }
         } else {
-            // Mode ajout - Firestore
-            await addDoc(collection(db, 'timers'), timerData);
+            // Mode ajout
+            const timer = new Timer(timerData);
+            this.timers.push(timer);
+            this.saveTimers();
+            this.renderTimer(timer);
         }
 
         this.closeModal();
@@ -367,11 +381,24 @@ class TimeProgressApp {
         this.modal.classList.add('active');
     }
 
-    async deleteTimer(timerId) {
-        // Supprimer de Firestore
-        await deleteDoc(doc(db, 'timers', timerId));
+    deleteTimer(timerId) {
+        const timer = this.timers.find(t => t.id === timerId);
+        if (timer && timer.intervalId) {
+            clearInterval(timer.intervalId);
+        }
 
-        // L'écouteur en temps réel mettra à jour l'UI automatiquement
+        this.timers = this.timers.filter(t => t.id !== timerId);
+        this.saveTimers();
+
+        const card = document.querySelector(`[data-timer-id="${timerId}"]`);
+        if (card) {
+            card.style.opacity = '0';
+            card.style.transform = 'scale(0.8)';
+            setTimeout(() => {
+                card.remove();
+                this.checkEmptyState();
+            }, 300);
+        }
     }
 
     checkEmptyState() {
@@ -389,80 +416,22 @@ class TimeProgressApp {
         }
     }
 
-    // Chargement initial depuis Firestore
-    async loadTimers() {
-        const q = query(collection(db, 'timers'), where('userId', '==', this.userId));
-        const querySnapshot = await getDocs(q);
-
-        querySnapshot.forEach((docSnapshot) => {
-            const data = docSnapshot.data();
-            data.id = docSnapshot.id;
-            const timer = new Timer(data);
-            this.timers.push(timer);
-            this.renderTimer(timer);
-        });
-
-        this.checkEmptyState();
+    saveTimers() {
+        const timersData = this.timers.map(timer => timer.toJSON());
+        localStorage.setItem('timers', JSON.stringify(timersData));
     }
 
-    // Écouter les changements en temps réel
-    setupRealtimeListener() {
-        const q = query(collection(db, 'timers'), where('userId', '==', this.userId));
-
-        onSnapshot(q, (snapshot) => {
-            snapshot.docChanges().forEach((change) => {
-                const data = change.doc.data();
-                data.id = change.doc.id;
-
-                if (change.type === 'added') {
-                    // Vérifier si le timer n'existe pas déjà (premier chargement)
-                    if (!this.timers.find(t => t.id === data.id)) {
-                        const timer = new Timer(data);
-                        this.timers.push(timer);
-                        this.renderTimer(timer);
-                    }
-                }
-
-                if (change.type === 'modified') {
-                    // Mettre à jour le timer
-                    const index = this.timers.findIndex(t => t.id === data.id);
-                    if (index !== -1) {
-                        const oldTimer = this.timers[index];
-                        if (oldTimer.intervalId) {
-                            clearInterval(oldTimer.intervalId);
-                        }
-                        const card = document.querySelector(`[data-timer-id="${data.id}"]`);
-                        if (card) card.remove();
-
-                        const timer = new Timer(data);
-                        this.timers[index] = timer;
-                        this.renderTimer(timer);
-                    }
-                }
-
-                if (change.type === 'removed') {
-                    // Supprimer le timer
-                    const index = this.timers.findIndex(t => t.id === data.id);
-                    if (index !== -1) {
-                        const timer = this.timers[index];
-                        if (timer.intervalId) {
-                            clearInterval(timer.intervalId);
-                        }
-                        this.timers.splice(index, 1);
-
-                        const card = document.querySelector(`[data-timer-id="${data.id}"]`);
-                        if (card) {
-                            card.style.opacity = '0';
-                            card.style.transform = 'scale(0.8)';
-                            setTimeout(() => {
-                                card.remove();
-                                this.checkEmptyState();
-                            }, 300);
-                        }
-                    }
-                }
+    loadTimers() {
+        const savedTimers = localStorage.getItem('timers');
+        if (savedTimers) {
+            const timersData = JSON.parse(savedTimers);
+            timersData.forEach(data => {
+                const timer = new Timer(data);
+                this.timers.push(timer);
+                this.renderTimer(timer);
             });
-        });
+        }
+        this.checkEmptyState();
     }
 
     registerServiceWorker() {
@@ -478,26 +447,6 @@ class TimeProgressApp {
     }
 }
 
-// Initialiser l'application après le chargement de toutes les classes
-console.log('Initialisation de TimeProgressApp...');
-
-// Récupérer Firebase depuis window
-db = window.firebaseDb;
-auth = window.firebaseAuth;
-
-if (window.firestoreModules) {
-    ({ collection, addDoc, getDocs, doc, updateDoc, deleteDoc, query, where, onSnapshot } = window.firestoreModules);
-
-    if (auth && auth.currentUser) {
-        new TimeProgressApp();
-    } else {
-        console.log('En attente de l\'authentification...');
-        setTimeout(() => {
-            if (auth && auth.currentUser) {
-                new TimeProgressApp();
-            }
-        }, 500);
-    }
-} else {
-    console.error('Firestore modules not loaded');
-}
+document.addEventListener('DOMContentLoaded', () => {
+    new TimeProgressApp();
+});
