@@ -111,6 +111,12 @@ body {
     flex: 1;
 }
 
+.timer-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.edit-button,
 .delete-button {
     background: none;
     border: none;
@@ -119,6 +125,10 @@ body {
     padding: 5px;
     transition: color 0.2s;
     font-size: 1.2rem;
+}
+
+.edit-button:hover {
+    color: var(--primary-color);
 }
 
 .delete-button:hover {

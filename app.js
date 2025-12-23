@@ -105,6 +105,7 @@ class Timer {
 class TimeProgressApp {
     constructor() {
         this.timers = [];
+        this.editingTimerId = null;
         this.initElements();
         this.loadTimers();
         this.attachEventListeners();
@@ -152,6 +153,8 @@ class TimeProgressApp {
     }
 
     openModal() {
+        this.editingTimerId = null;
+        document.querySelector('.modal-content h2').textContent = 'Nouvelle période de temps';
         this.modal.classList.add('active');
     }
 
@@ -159,6 +162,7 @@ class TimeProgressApp {
         this.modal.classList.remove('active');
         this.timerForm.reset();
         this.setDefaultDates();
+        this.editingTimerId = null;
     }
 
     handleSubmit(e) {
@@ -175,10 +179,38 @@ class TimeProgressApp {
             refreshRate: this.refreshRateInput.value
         };
 
-        const timer = new Timer(timerData);
-        this.timers.push(timer);
-        this.saveTimers();
-        this.renderTimer(timer);
+        if (this.editingTimerId) {
+            // Mode édition
+            const timerIndex = this.timers.findIndex(t => t.id === this.editingTimerId);
+            if (timerIndex !== -1) {
+                // Arrêter l'ancien timer
+                const oldTimer = this.timers[timerIndex];
+                if (oldTimer.intervalId) {
+                    clearInterval(oldTimer.intervalId);
+                }
+
+                // Conserver l'ID original
+                timerData.id = this.editingTimerId;
+                const updatedTimer = new Timer(timerData);
+                this.timers[timerIndex] = updatedTimer;
+
+                // Supprimer l'ancienne carte et créer la nouvelle
+                const oldCard = document.querySelector(`[data-timer-id="${this.editingTimerId}"]`);
+                if (oldCard) {
+                    oldCard.remove();
+                }
+
+                this.saveTimers();
+                this.renderTimer(updatedTimer);
+            }
+        } else {
+            // Mode ajout
+            const timer = new Timer(timerData);
+            this.timers.push(timer);
+            this.saveTimers();
+            this.renderTimer(timer);
+        }
+
         this.closeModal();
     }
 
@@ -200,7 +232,10 @@ class TimeProgressApp {
         card.innerHTML = `
             <div class="timer-header">
                 <h3 class="timer-title">${timer.title}</h3>
-                <button class="delete-button" data-timer-id="${timer.id}">×</button>
+                <div class="timer-actions">
+                    <button class="edit-button" data-timer-id="${timer.id}" title="Modifier">✎</button>
+                    <button class="delete-button" data-timer-id="${timer.id}" title="Supprimer">×</button>
+                </div>
             </div>
 
             <div class="timer-circle-container">
@@ -252,7 +287,10 @@ class TimeProgressApp {
 
         this.timersGrid.appendChild(card);
 
+        const editButton = card.querySelector('.edit-button');
         const deleteButton = card.querySelector('.delete-button');
+
+        editButton.addEventListener('click', () => this.editTimer(timer.id));
         deleteButton.addEventListener('click', () => this.deleteTimer(timer.id));
 
         this.startTimerUpdate(timer);
@@ -297,6 +335,34 @@ class TimeProgressApp {
         statusElement.className = `timer-status ${progress.status}`;
         statusElement.textContent = progress.status === 'active' ? 'En cours' :
                                     progress.status === 'completed' ? 'Terminé' : 'À venir';
+    }
+
+    editTimer(timerId) {
+        const timer = this.timers.find(t => t.id === timerId);
+        if (!timer) return;
+
+        this.editingTimerId = timerId;
+
+        // Pré-remplir le formulaire
+        this.titleInput.value = timer.title;
+
+        const startDate = new Date(timer.startDate);
+        const endDate = new Date(timer.endDate);
+
+        this.startDateInput.valueAsDate = startDate;
+        this.startTimeInput.value = startDate.toTimeString().slice(0, 5);
+
+        this.endDateInput.valueAsDate = endDate;
+        this.endTimeInput.value = endDate.toTimeString().slice(0, 5);
+
+        this.granularityInput.value = timer.granularity;
+        this.refreshRateInput.value = timer.refreshRate;
+
+        // Changer le titre du modal
+        document.querySelector('.modal-content h2').textContent = 'Modifier la période';
+
+        // Ouvrir le modal
+        this.modal.classList.add('active');
     }
 
     deleteTimer(timerId) {
