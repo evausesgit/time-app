@@ -206,7 +206,7 @@ body {
 }
 
 .circle-text {
-    font-size: 0.9rem;
+    font-size: 1rem;
     font-weight: bold;
     fill: var(--text-primary);
     text-anchor: middle;
