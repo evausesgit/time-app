@@ -38,41 +38,90 @@
     <div class="modal" id="modal">
         <div class="modal-content">
             <h2>Nouvelle période de temps</h2>
+
+            <!-- Sélecteur de type -->
+            <div class="type-selector" id="typeSelector">
+                <button type="button" class="type-btn active" data-type="timer">Timer individuel</button>
+                <button type="button" class="type-btn" data-type="group">Groupe de périodes</button>
+            </div>
+
             <form id="timerForm">
-                <div class="form-group">
-                    <label for="title">Titre</label>
-                    <input type="text" id="title" required placeholder="Ex: Projet deadline">
-                </div>
-
-                <div class="form-group">
-                    <label for="startDateTime">Date et heure de début</label>
-                    <input type="text" id="startDateTime" required placeholder="Sélectionnez date et heure">
-                </div>
-
-                <div class="form-group">
-                    <label for="endDateTime">Date et heure de fin</label>
-                    <input type="text" id="endDateTime" required placeholder="Sélectionnez date et heure">
-                </div>
-
-                <div class="form-row">
+                <!-- Formulaire pour timer individuel -->
+                <div id="timerFormFields">
                     <div class="form-group">
-                        <label for="granularity">Granularité</label>
-                        <select id="granularity">
-                            <option value="seconds">Secondes</option>
-                            <option value="minutes">Minutes</option>
-                            <option value="hours">Heures</option>
-                            <option value="days">Jours</option>
-                        </select>
+                        <label for="title">Titre</label>
+                        <input type="text" id="title" required placeholder="Ex: Projet deadline">
                     </div>
+
                     <div class="form-group">
-                        <label for="refreshRate">Fréquence de rafraîchissement</label>
-                        <select id="refreshRate">
-                            <option value="100">100ms</option>
-                            <option value="500">500ms</option>
-                            <option value="1000" selected>1 seconde</option>
-                            <option value="5000">5 secondes</option>
-                            <option value="60000">1 minute</option>
-                        </select>
+                        <label for="startDateTime">Date et heure de début</label>
+                        <input type="text" id="startDateTime" placeholder="Sélectionnez date et heure">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="endDateTime">Date et heure de fin</label>
+                        <input type="text" id="endDateTime" placeholder="Sélectionnez date et heure">
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="granularity">Granularité</label>
+                            <select id="granularity">
+                                <option value="seconds">Secondes</option>
+                                <option value="minutes">Minutes</option>
+                                <option value="hours">Heures</option>
+                                <option value="days">Jours</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="refreshRate">Fréquence de rafraîchissement</label>
+                            <select id="refreshRate">
+                                <option value="100">100ms</option>
+                                <option value="500">500ms</option>
+                                <option value="1000" selected>1 seconde</option>
+                                <option value="5000">5 secondes</option>
+                                <option value="60000">1 minute</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Formulaire pour groupe -->
+                <div id="groupFormFields" style="display: none;">
+                    <div class="form-group">
+                        <label for="groupTitle">Titre du groupe</label>
+                        <input type="text" id="groupTitle" placeholder="Ex: Projet multi-phases">
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="groupGranularity">Granularité</label>
+                            <select id="groupGranularity">
+                                <option value="seconds">Secondes</option>
+                                <option value="minutes">Minutes</option>
+                                <option value="hours">Heures</option>
+                                <option value="days">Jours</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="groupRefreshRate">Fréquence de rafraîchissement</label>
+                            <select id="groupRefreshRate">
+                                <option value="100">100ms</option>
+                                <option value="500">500ms</option>
+                                <option value="1000" selected>1 seconde</option>
+                                <option value="5000">5 secondes</option>
+                                <option value="60000">1 minute</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Liste des périodes du groupe -->
+                    <div class="periods-section">
+                        <div class="periods-header">
+                            <label>Périodes (minimum 2)</label>
+                            <button type="button" class="btn-add-period" id="addPeriodBtn">+ Ajouter une période</button>
+                        </div>
+                        <div id="periodsList"></div>
                     </div>
                 </div>
 
