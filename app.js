@@ -251,6 +251,7 @@ class TimeProgressApp {
             allowInput: true,
             clickOpens: true,
             minuteIncrement: 1,
+            disableMobile: false,
             onChange: (selectedDates, dateStr, instance) => {
                 // S'assurer que la valeur est bien définie
                 instance.input.value = dateStr;
@@ -266,6 +267,7 @@ class TimeProgressApp {
             allowInput: true,
             clickOpens: true,
             minuteIncrement: 1,
+            disableMobile: false,
             onChange: (selectedDates, dateStr, instance) => {
                 // S'assurer que la valeur est bien définie
                 instance.input.value = dateStr;
@@ -375,7 +377,8 @@ class TimeProgressApp {
             locale: "fr",
             defaultDate: new Date(),
             allowInput: true,
-            minuteIncrement: 1
+            minuteIncrement: 1,
+            disableMobile: false
         });
 
         const endPicker = flatpickr(endInput, {
@@ -385,7 +388,8 @@ class TimeProgressApp {
             locale: "fr",
             defaultDate: new Date(Date.now() + 24 * 60 * 60 * 1000),
             allowInput: true,
-            minuteIncrement: 1
+            minuteIncrement: 1,
+            disableMobile: false
         });
 
         this.periodPickers.push({ start: startPicker, end: endPicker, color });
