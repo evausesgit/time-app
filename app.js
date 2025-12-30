@@ -219,6 +219,13 @@ class TimeProgressApp {
         this.tabsContainer = document.getElementById('tabsContainer');
         this.tabButtons = this.tabsContainer.querySelectorAll('.tab-btn');
 
+        // Menu elements
+        this.hamburgerBtn = document.getElementById('hamburgerBtn');
+        this.menuOverlay = document.getElementById('menuOverlay');
+        this.menuClose = document.getElementById('menuClose');
+        this.menuTabs = document.getElementById('menuTabs');
+        this.menuTabButtons = this.menuTabs.querySelectorAll('.menu-tab-btn');
+
         // Timer individual inputs
         this.titleInput = document.getElementById('title');
         this.startDateTimeInput = document.getElementById('startDateTime');
@@ -310,20 +317,57 @@ class TimeProgressApp {
         // Add period button
         this.addPeriodBtn.addEventListener('click', () => this.addPeriodField());
 
-        // Tab buttons
+        // Tab buttons (desktop)
         this.tabButtons.forEach(btn => {
             btn.addEventListener('click', () => {
                 const filter = btn.dataset.filter;
                 this.switchFilter(filter);
             });
         });
+
+        // Menu buttons (mobile)
+        this.hamburgerBtn.addEventListener('click', () => this.openMenu());
+        this.menuClose.addEventListener('click', () => this.closeMenu());
+
+        // Menu tab buttons
+        this.menuTabButtons.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const filter = btn.dataset.filter;
+                this.switchFilter(filter);
+                this.closeMenu();
+            });
+        });
+
+        // Close menu when clicking outside
+        this.menuOverlay.addEventListener('click', (e) => {
+            if (e.target === this.menuOverlay) {
+                this.closeMenu();
+            }
+        });
+    }
+
+    openMenu() {
+        this.menuOverlay.classList.add('active');
+    }
+
+    closeMenu() {
+        this.menuOverlay.classList.remove('active');
     }
 
     switchFilter(filter) {
         this.currentFilter = filter;
 
-        // Update active tab button
+        // Update active tab button (desktop)
         this.tabButtons.forEach(btn => {
+            if (btn.dataset.filter === filter) {
+                btn.classList.add('active');
+            } else {
+                btn.classList.remove('active');
+            }
+        });
+
+        // Update active tab button (mobile menu)
+        this.menuTabButtons.forEach(btn => {
             if (btn.dataset.filter === filter) {
                 btn.classList.add('active');
             } else {

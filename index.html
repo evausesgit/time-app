@@ -13,11 +13,46 @@
 </head>
 <body>
     <div class="container">
-        <!-- Header avec bouton de déconnexion -->
-        <div class="app-header">
+        <!-- Header avec bouton de déconnexion (desktop only) -->
+        <div class="app-header desktop-only">
             <div class="user-info" id="userInfo" style="display: none;">
                 <span id="userEmail"></span>
                 <button class="logout-btn" id="logoutBtn">Déconnexion</button>
+            </div>
+        </div>
+
+        <!-- Menu hamburger (mobile only) -->
+        <button class="hamburger-btn mobile-only" id="hamburgerBtn">
+            <svg viewBox="0 0 24 24" width="28" height="28">
+                <line x1="3" y1="6" x2="21" y2="6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                <line x1="3" y1="12" x2="21" y2="12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                <line x1="3" y1="18" x2="21" y2="18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+        </button>
+
+        <!-- Menu overlay (mobile) -->
+        <div class="menu-overlay" id="menuOverlay">
+            <div class="menu-content">
+                <div class="menu-header">
+                    <h3>Menu</h3>
+                    <button class="menu-close" id="menuClose">×</button>
+                </div>
+
+                <div class="menu-user-info" id="menuUserInfo" style="display: none;">
+                    <span id="menuUserEmail"></span>
+                </div>
+
+                <div class="menu-section">
+                    <h4>Filtrer les timers</h4>
+                    <div class="menu-tabs" id="menuTabs">
+                        <button class="menu-tab-btn active" data-filter="ongoing">En cours</button>
+                        <button class="menu-tab-btn" data-filter="completed">Passés</button>
+                    </div>
+                </div>
+
+                <div class="menu-section">
+                    <button class="menu-logout-btn" id="menuLogoutBtn">Déconnexion</button>
+                </div>
             </div>
         </div>
 
@@ -30,8 +65,8 @@
             </svg>
         </button>
 
-        <!-- Onglets de filtrage -->
-        <div class="tabs-container" id="tabsContainer">
+        <!-- Onglets de filtrage (desktop only) -->
+        <div class="tabs-container desktop-only" id="tabsContainer">
             <button class="tab-btn active" data-filter="ongoing">En cours</button>
             <button class="tab-btn" data-filter="completed">Passés</button>
         </div>
@@ -167,6 +202,10 @@
                 document.getElementById('userEmail').textContent = user.email;
                 document.getElementById('userInfo').style.display = 'flex';
 
+                // Afficher l'email dans le menu mobile aussi
+                document.getElementById('menuUserEmail').textContent = user.email;
+                document.getElementById('menuUserInfo').style.display = 'block';
+
                 // Charger app.js dynamiquement après l'auth
                 const script = document.createElement('script');
                 script.src = 'app.js';
@@ -180,8 +219,14 @@
             }
         });
 
-        // Déconnexion
+        // Déconnexion (desktop)
         document.getElementById('logoutBtn').addEventListener('click', async () => {
+            await signOut(auth);
+            window.location.href = 'auth.html';
+        });
+
+        // Déconnexion (menu mobile)
+        document.getElementById('menuLogoutBtn').addEventListener('click', async () => {
             await signOut(auth);
             window.location.href = 'auth.html';
         });
