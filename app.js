@@ -200,6 +200,7 @@ class TimeProgressApp {
         this.timers = [];
         this.editingTimerId = null;
         this.userId = auth.currentUser.uid;
+        this.currentFilter = 'ongoing'; // 'ongoing' ou 'completed'
         this.initElements();
         this.loadTimers();
         this.attachEventListeners();
@@ -215,6 +216,8 @@ class TimeProgressApp {
         this.timerForm = document.getElementById('timerForm');
         this.cancelButton = document.getElementById('cancelButton');
         this.timersGrid = document.getElementById('timersGrid');
+        this.tabsContainer = document.getElementById('tabsContainer');
+        this.tabButtons = this.tabsContainer.querySelectorAll('.tab-btn');
 
         // Timer individual inputs
         this.titleInput = document.getElementById('title');
@@ -306,6 +309,81 @@ class TimeProgressApp {
 
         // Add period button
         this.addPeriodBtn.addEventListener('click', () => this.addPeriodField());
+
+        // Tab buttons
+        this.tabButtons.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const filter = btn.dataset.filter;
+                this.switchFilter(filter);
+            });
+        });
+    }
+
+    switchFilter(filter) {
+        this.currentFilter = filter;
+
+        // Update active tab button
+        this.tabButtons.forEach(btn => {
+            if (btn.dataset.filter === filter) {
+                btn.classList.add('active');
+            } else {
+                btn.classList.remove('active');
+            }
+        });
+
+        // Re-render all timers with new filter
+        this.refreshTimersDisplay();
+    }
+
+    shouldShowTimer(timer) {
+        let status;
+
+        if (timer.isGroup) {
+            // For groups, determine overall status
+            const statuses = timer.periods.map(p => timer.getProgress(p).status);
+            const hasActive = statuses.includes('active');
+            const hasUpcoming = statuses.includes('upcoming');
+            const allCompleted = statuses.every(s => s === 'completed');
+
+            if (hasActive || hasUpcoming) {
+                status = 'ongoing';
+            } else if (allCompleted) {
+                status = 'completed';
+            } else {
+                status = 'ongoing';
+            }
+        } else {
+            // For individual timers
+            const progress = timer.getProgress();
+            if (progress.status === 'active' || progress.status === 'upcoming') {
+                status = 'ongoing';
+            } else {
+                status = 'completed';
+            }
+        }
+
+        return status === this.currentFilter;
+    }
+
+    refreshTimersDisplay() {
+        // Clear intervals for all timers
+        this.timers.forEach(timer => {
+            if (timer.intervalId) {
+                clearInterval(timer.intervalId);
+            }
+        });
+
+        // Clear the grid
+        this.timersGrid.innerHTML = '';
+
+        // Re-render timers that match the filter
+        this.timers.forEach(timer => {
+            if (this.shouldShowTimer(timer)) {
+                this.renderTimer(timer);
+            }
+        });
+
+        this.checkEmptyState();
     }
 
     toggleFormMode() {
@@ -933,8 +1011,12 @@ class TimeProgressApp {
         // Trier par position avant de rendre
         this.timers.sort((a, b) => a.position - b.position);
 
-        // Rendre les timers dans l'ordre
-        this.timers.forEach(timer => this.renderTimer(timer));
+        // Rendre les timers qui correspondent au filtre actuel
+        this.timers.forEach(timer => {
+            if (this.shouldShowTimer(timer)) {
+                this.renderTimer(timer);
+            }
+        });
 
         this.checkEmptyState();
     }
@@ -953,7 +1035,10 @@ class TimeProgressApp {
                     if (!this.timers.find(t => t.id === data.id)) {
                         const item = data.isGroup ? new TimerGroup(data) : new Timer(data);
                         this.timers.push(item);
-                        this.renderTimer(item);
+                        // Only render if it matches the current filter
+                        if (this.shouldShowTimer(item)) {
+                            this.renderTimer(item);
+                        }
                     }
                 }
 
@@ -970,7 +1055,10 @@ class TimeProgressApp {
 
                         const item = data.isGroup ? new TimerGroup(data) : new Timer(data);
                         this.timers[index] = item;
-                        this.renderTimer(item);
+                        // Only render if it matches the current filter
+                        if (this.shouldShowTimer(item)) {
+                            this.renderTimer(item);
+                        }
                     }
                 }
 
