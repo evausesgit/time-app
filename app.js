@@ -1,7 +1,7 @@
 // Application avec Firebase Firestore
 
 // Récupérer Firebase depuis window (sera initialisé après chargement)
-let db, auth, collection, addDoc, getDocs, doc, updateDoc, deleteDoc, query, where, onSnapshot;
+let db, auth, collection, addDoc, getDocs, doc, updateDoc, deleteDoc, setDoc, query, where, onSnapshot;
 
 // Classe pour gérer un timer individuel
 class Timer {
@@ -203,6 +203,7 @@ class TimeProgressApp {
         this.currentFilter = 'ongoing'; // 'ongoing' ou 'completed'
         this.initElements();
         this.loadTimers();
+        this.loadSchedule();
         this.attachEventListeners();
         this.registerServiceWorker();
         this.setDefaultDates();
@@ -366,6 +367,7 @@ class TimeProgressApp {
             if (isNaN(day) || isNaN(hour)) return;
             this.scheduleData[day][hour] = this.selectedActivity;
             el.className = `planning-cell ${this.selectedActivity}`;
+            this.saveSchedule();
         };
         this.planningGrid.addEventListener('mousedown', (e) => {
             const cell = e.target.closest('.planning-cell');
@@ -463,6 +465,7 @@ class TimeProgressApp {
                 ['sleep','sleep','sleep','sleep','sleep','sleep','sport','sleep','sleep','sport','sport','sport','family','family','family','family','family','family','family','family','family','sleep','sleep','sleep'],
             ];
             this.selectedActivity = 'work';
+            this.saveSchedule();
         }
 
         // Toolbar
@@ -484,6 +487,37 @@ class TimeProgressApp {
             });
         });
         this.planningGrid.innerHTML = html;
+    }
+
+    async loadSchedule() {
+        try {
+            const q = query(collection(db, 'planning'), where('userId', '==', this.userId));
+            const snapshot = await getDocs(q);
+            if (!snapshot.empty) {
+                const docData = snapshot.docs[0];
+                this.scheduleData = docData.data().schedule;
+                this.scheduleDocId = docData.id;
+            }
+        } catch (e) {
+            console.error('Erreur chargement planning:', e);
+        }
+    }
+
+    saveSchedule() {
+        if (this.saveScheduleTimeout) clearTimeout(this.saveScheduleTimeout);
+        this.saveScheduleTimeout = setTimeout(async () => {
+            try {
+                const data = { userId: this.userId, schedule: this.scheduleData };
+                if (this.scheduleDocId) {
+                    await setDoc(doc(db, 'planning', this.scheduleDocId), data);
+                } else {
+                    const ref = await addDoc(collection(db, 'planning'), data);
+                    this.scheduleDocId = ref.id;
+                }
+            } catch (e) {
+                console.error('Erreur sauvegarde planning:', e);
+            }
+        }, 1000);
     }
 
     shouldShowTimer(timer) {
@@ -1287,7 +1321,7 @@ db = window.firebaseDb;
 auth = window.firebaseAuth;
 
 if (window.firestoreModules) {
-    ({ collection, addDoc, getDocs, doc, updateDoc, deleteDoc, query, where, onSnapshot } = window.firestoreModules);
+    ({ collection, addDoc, getDocs, doc, updateDoc, deleteDoc, setDoc, query, where, onSnapshot } = window.firestoreModules);
 
     if (auth && auth.currentUser) {
         new TimeProgressApp();
