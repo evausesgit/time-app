@@ -47,6 +47,7 @@
                     <div class="menu-tabs" id="menuTabs">
                         <button class="menu-tab-btn active" data-filter="ongoing">En cours</button>
                         <button class="menu-tab-btn" data-filter="completed">Passés</button>
+                        <button class="menu-tab-btn" data-filter="planning">Planning</button>
                     </div>
                 </div>
 
@@ -69,10 +70,19 @@
         <div class="tabs-container desktop-only" id="tabsContainer">
             <button class="tab-btn active" data-filter="ongoing">En cours</button>
             <button class="tab-btn" data-filter="completed">Passés</button>
+            <button class="tab-btn" data-filter="planning">Planning</button>
         </div>
 
         <!-- Grille des cercles de temps -->
         <div class="timers-grid" id="timersGrid"></div>
+
+        <!-- Vue planning hebdomadaire -->
+        <div class="planning-view" id="planningView" style="display:none">
+            <div class="planning-toolbar" id="planningToolbar"></div>
+            <div class="planning-grid-wrapper">
+                <div class="planning-grid" id="planningGrid"></div>
+            </div>
+        </div>
     </div>
 
     <!-- Modal pour ajouter une période -->

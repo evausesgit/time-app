@@ -216,6 +216,9 @@ class TimeProgressApp {
         this.timerForm = document.getElementById('timerForm');
         this.cancelButton = document.getElementById('cancelButton');
         this.timersGrid = document.getElementById('timersGrid');
+        this.planningView = document.getElementById('planningView');
+        this.planningGrid = document.getElementById('planningGrid');
+        this.planningToolbar = document.getElementById('planningToolbar');
         this.tabsContainer = document.getElementById('tabsContainer');
         this.tabButtons = this.tabsContainer.querySelectorAll('.tab-btn');
 
@@ -344,6 +347,48 @@ class TimeProgressApp {
                 this.closeMenu();
             }
         });
+
+        // Planning toolbar: select active activity
+        this.planningToolbar.addEventListener('click', (e) => {
+            const btn = e.target.closest('[data-activity]');
+            if (!btn) return;
+            this.selectedActivity = btn.dataset.activity;
+            this.planningToolbar.querySelectorAll('.planning-tool-btn').forEach(b => {
+                b.classList.toggle('active', b.dataset.activity === this.selectedActivity);
+            });
+        });
+
+        // Planning grid: paint cells on click + drag
+        let painting = false;
+        const paintCell = (el) => {
+            const day = parseInt(el.dataset.day);
+            const hour = parseInt(el.dataset.hour);
+            if (isNaN(day) || isNaN(hour)) return;
+            this.scheduleData[day][hour] = this.selectedActivity;
+            el.className = `planning-cell ${this.selectedActivity}`;
+        };
+        this.planningGrid.addEventListener('mousedown', (e) => {
+            const cell = e.target.closest('.planning-cell');
+            if (!cell) return;
+            painting = true;
+            paintCell(cell);
+        });
+        this.planningGrid.addEventListener('mouseover', (e) => {
+            if (!painting) return;
+            const cell = e.target.closest('.planning-cell');
+            if (cell) paintCell(cell);
+        });
+        document.addEventListener('mouseup', () => { painting = false; });
+        this.planningGrid.addEventListener('touchstart', (e) => {
+            const t = e.touches[0];
+            const cell = document.elementFromPoint(t.clientX, t.clientY)?.closest('.planning-cell');
+            if (cell) paintCell(cell);
+        }, { passive: true });
+        this.planningGrid.addEventListener('touchmove', (e) => {
+            const t = e.touches[0];
+            const cell = document.elementFromPoint(t.clientX, t.clientY)?.closest('.planning-cell');
+            if (cell) paintCell(cell);
+        }, { passive: true });
     }
 
     openMenu() {
@@ -375,8 +420,70 @@ class TimeProgressApp {
             }
         });
 
-        // Re-render all timers with new filter
-        this.refreshTimersDisplay();
+        if (filter === 'planning') {
+            this.timersGrid.style.display = 'none';
+            this.addButton.style.display = 'none';
+            this.planningView.style.display = 'block';
+            this.renderPlanningView();
+        } else {
+            this.timersGrid.style.display = '';
+            this.addButton.style.display = '';
+            this.planningView.style.display = 'none';
+            // Re-render all timers with new filter
+            this.refreshTimersDisplay();
+        }
+    }
+
+    renderPlanningView() {
+        const DAYS = ['L', 'M', 'Me', 'J', 'V', 'S', 'D'];
+        const ACTIVITIES = [
+            { key: 'sleep',  label: 'Sommeil', color: '#5c6bc0' },
+            { key: 'sport',  label: 'Sport',   color: '#e53935' },
+            { key: 'family', label: 'Famille', color: '#66bb6a' },
+            { key: 'work',   label: 'Travail', color: '#ffa726' },
+            { key: 'empty',  label: 'Effacer', color: 'rgba(255,255,255,0.08)' },
+        ];
+
+        // Init schedule data once (sport 6-7 ajouté pour tous les jours)
+        if (!this.scheduleData) {
+            this.scheduleData = [
+                // L: 0-5 sleep | 6 sport | 7-8 family | 9-17 work | 18-20 family | 21-23 sleep
+                ['sleep','sleep','sleep','sleep','sleep','sleep','sport','family','family','work','work','work','work','work','work','work','work','work','family','family','family','sleep','sleep','sleep'],
+                // M
+                ['sleep','sleep','sleep','sleep','sleep','sleep','sport','family','family','work','work','work','work','work','work','work','work','work','family','family','family','sleep','sleep','sleep'],
+                // Me
+                ['sleep','sleep','sleep','sleep','sleep','sleep','sport','family','family','work','work','work','work','work','work','work','work','work','family','family','family','sleep','sleep','sleep'],
+                // J
+                ['sleep','sleep','sleep','sleep','sleep','sleep','sport','family','family','work','work','work','work','work','work','work','work','work','family','family','family','sleep','sleep','sleep'],
+                // V
+                ['sleep','sleep','sleep','sleep','sleep','sleep','sport','family','family','work','work','work','work','work','work','work','work','work','family','family','family','sleep','sleep','sleep'],
+                // S: 0-5 sleep | 6 sport | 7-8 sleep | 9-11 sport | 12-20 work | 21-23 sleep
+                ['sleep','sleep','sleep','sleep','sleep','sleep','sport','sleep','sleep','sport','sport','sport','work','work','work','work','work','work','work','work','work','sleep','sleep','sleep'],
+                // D: 0-5 sleep | 6 sport | 7-8 sleep | 9-11 sport | 12-20 family | 21-23 sleep
+                ['sleep','sleep','sleep','sleep','sleep','sleep','sport','sleep','sleep','sport','sport','sport','family','family','family','family','family','family','family','family','family','sleep','sleep','sleep'],
+            ];
+            this.selectedActivity = 'work';
+        }
+
+        // Toolbar
+        this.planningToolbar.innerHTML = ACTIVITIES.map(a =>
+            `<button class="planning-tool-btn ${this.selectedActivity === a.key ? 'active' : ''}" data-activity="${a.key}">
+                <span class="tool-dot" style="background:${a.color}"></span>${a.label}
+            </button>`
+        ).join('');
+
+        // Grid
+        let html = '<div class="planning-hour-label"></div>';
+        for (let h = 0; h < 24; h++) {
+            html += `<div class="planning-hour-label">${h}</div>`;
+        }
+        this.scheduleData.forEach((dayData, dayIndex) => {
+            html += `<div class="planning-day-label">${DAYS[dayIndex]}</div>`;
+            dayData.forEach((activity, hour) => {
+                html += `<div class="planning-cell ${activity}" data-day="${dayIndex}" data-hour="${hour}"></div>`;
+            });
+        });
+        this.planningGrid.innerHTML = html;
     }
 
     shouldShowTimer(timer) {

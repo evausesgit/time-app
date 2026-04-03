@@ -309,6 +309,108 @@ body {
     box-shadow: 0 4px 15px rgba(108, 92, 231, 0.4);
 }
 
+/* Vue Planning hebdomadaire */
+.planning-view {
+    padding: 20px;
+    max-width: 100%;
+    overflow-x: auto;
+}
+
+.planning-toolbar {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+}
+
+.planning-tool-btn {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 8px 16px;
+    border: 2px solid rgba(255,255,255,0.1);
+    border-radius: 10px;
+    background: var(--surface);
+    color: var(--text-secondary);
+    cursor: pointer;
+    font-size: 0.85rem;
+    font-weight: 600;
+    transition: all 0.2s;
+}
+
+.planning-tool-btn:hover {
+    border-color: rgba(255,255,255,0.3);
+    color: var(--text-primary);
+}
+
+.planning-tool-btn.active {
+    border-color: white;
+    color: var(--text-primary);
+    box-shadow: 0 0 0 3px rgba(255,255,255,0.15);
+}
+
+.tool-dot {
+    width: 13px;
+    height: 13px;
+    border-radius: 3px;
+    display: inline-block;
+    border: 1px solid rgba(255,255,255,0.2);
+    flex-shrink: 0;
+}
+
+.planning-grid-wrapper {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+.planning-grid {
+    display: grid;
+    /* 1 col for day labels + 24 cols for hours */
+    grid-template-columns: 36px repeat(24, minmax(28px, 1fr));
+    gap: 2px;
+    min-width: 700px;
+}
+
+.planning-hour-label {
+    grid-column: span 1;
+    font-size: 0.7rem;
+    color: var(--text-secondary);
+    text-align: center;
+    padding: 4px 0;
+    font-weight: 600;
+}
+
+.planning-hour-label.row-start {
+    /* empty top-left corner */
+}
+
+.planning-day-label {
+    font-size: 0.78rem;
+    color: var(--text-primary);
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2px;
+}
+
+.planning-cell {
+    height: 36px;
+    border-radius: 4px;
+    transition: opacity 0.2s;
+}
+
+.planning-cell:hover {
+    opacity: 0.8;
+}
+
+.planning-cell.sleep  { background: #5c6bc0; }
+.planning-cell.sport  { background: #e53935; }
+.planning-cell.family { background: #66bb6a; }
+.planning-cell.work   { background: #ffa726; }
+.planning-cell.empty  { background: rgba(255,255,255,0.04); }
+
 /* Grille des timers */
 .timers-grid {
     margin-top: 0;
