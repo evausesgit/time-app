@@ -316,6 +316,120 @@ body {
     overflow-x: auto;
 }
 
+/* Sélecteur de planning */
+.planning-selector-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+}
+
+.planning-select {
+    background: var(--surface);
+    color: var(--text-primary);
+    border: 2px solid rgba(255,255,255,0.15);
+    border-radius: 10px;
+    padding: 8px 14px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    outline: none;
+    min-width: 180px;
+}
+
+.planning-select:focus {
+    border-color: var(--primary-color);
+}
+
+.planning-new-btn {
+    padding: 8px 16px;
+    border: 2px solid var(--primary-color);
+    border-radius: 10px;
+    background: transparent;
+    color: var(--primary-color);
+    cursor: pointer;
+    font-size: 0.85rem;
+    font-weight: 700;
+    transition: all 0.2s;
+}
+
+.planning-new-btn:hover {
+    background: var(--primary-color);
+    color: white;
+}
+
+.planning-delete-btn {
+    padding: 8px 12px;
+    border: 2px solid rgba(214, 48, 49, 0.4);
+    border-radius: 10px;
+    background: transparent;
+    color: #d63031;
+    cursor: pointer;
+    font-size: 0.85rem;
+    transition: all 0.2s;
+}
+
+.planning-delete-btn:hover {
+    background: rgba(214, 48, 49, 0.15);
+}
+
+.planning-new-form {
+    display: none;
+    align-items: center;
+    gap: 6px;
+    width: 100%;
+    justify-content: center;
+    margin-top: 8px;
+}
+
+.planning-name-input {
+    background: var(--surface);
+    color: var(--text-primary);
+    border: 2px solid var(--primary-color);
+    border-radius: 10px;
+    padding: 8px 14px;
+    font-size: 0.9rem;
+    outline: none;
+    width: 220px;
+}
+
+.planning-create-btn {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 10px;
+    background: var(--primary-color);
+    color: white;
+    cursor: pointer;
+    font-size: 0.85rem;
+    font-weight: 700;
+    transition: opacity 0.2s;
+}
+
+.planning-create-btn:hover { opacity: 0.85; }
+
+.planning-cancel-btn {
+    padding: 8px 12px;
+    border: 2px solid rgba(255,255,255,0.15);
+    border-radius: 10px;
+    background: transparent;
+    color: var(--text-secondary);
+    cursor: pointer;
+    font-size: 0.9rem;
+}
+
+.planning-empty-state {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--text-secondary);
+}
+
+.planning-empty-state p {
+    margin-bottom: 16px;
+    font-size: 0.95rem;
+}
+
 .planning-toolbar {
     display: flex;
     gap: 8px;

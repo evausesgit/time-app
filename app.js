@@ -194,6 +194,14 @@ class TimerGroup {
     }
 }
 
+function defaultSchedule() {
+    const wd = () => ['sleep','sleep','sleep','sleep','sleep','sleep','sport','family','family','work','work','work','work','work','work','work','work','work','family','family','family','sleep','sleep','sleep'];
+    return [wd(), wd(), wd(), wd(), wd(),
+        ['sleep','sleep','sleep','sleep','sleep','sleep','sport','sleep','sleep','sport','sport','sport','work','work','work','work','work','work','work','work','work','sleep','sleep','sleep'],
+        ['sleep','sleep','sleep','sleep','sleep','sleep','sport','sleep','sleep','sport','sport','sport','family','family','family','family','family','family','family','family','family','sleep','sleep','sleep'],
+    ];
+}
+
 // Classe pour gérer l'application
 class TimeProgressApp {
     constructor() {
@@ -203,7 +211,7 @@ class TimeProgressApp {
         this.currentFilter = 'ongoing'; // 'ongoing' ou 'completed'
         this.initElements();
         this.loadTimers();
-        this.loadSchedule();
+        this.loadAllPlannings();
         this.attachEventListeners();
         this.registerServiceWorker();
         this.setDefaultDates();
@@ -221,6 +229,9 @@ class TimeProgressApp {
         this.planningGrid = document.getElementById('planningGrid');
         this.planningToolbar = document.getElementById('planningToolbar');
         this.planningStats = document.getElementById('planningStats');
+        this.planningSelectorBar = document.getElementById('planningSelectorBar');
+        this.plannings = null; // null = pas encore chargé
+        this.currentPlanningId = null;
         this.tabsContainer = document.getElementById('tabsContainer');
         this.tabButtons = this.tabsContainer.querySelectorAll('.tab-btn');
 
@@ -439,6 +450,35 @@ class TimeProgressApp {
     }
 
     renderPlanningView() {
+        // En cours de chargement
+        if (this.plannings === null) {
+            this.planningSelectorBar.innerHTML = '<span style="color:var(--text-secondary);font-size:0.9rem">Chargement...</span>';
+            this.planningToolbar.innerHTML = '';
+            this.planningGrid.innerHTML = '';
+            this.planningStats.innerHTML = '';
+            return;
+        }
+
+        // Aucun planning existant
+        if (this.plannings.length === 0) {
+            this.planningSelectorBar.innerHTML = `
+                <div class="planning-empty-state">
+                    <p>Aucun planning sauvegardé.</p>
+                    <div class="planning-new-form" id="planningNewForm" style="display:flex">
+                        <input class="planning-name-input" id="planningNameInput" type="text" placeholder="Nom du planning...">
+                        <button class="planning-create-btn" id="planningCreateBtn">Créer</button>
+                    </div>
+                </div>`;
+            this.planningToolbar.innerHTML = '';
+            this.planningGrid.innerHTML = '';
+            this.planningStats.innerHTML = '';
+            this._bindNewForm();
+            return;
+        }
+
+        this.renderPlanningSelector();
+        if (!this.scheduleData) return;
+
         const DAYS = ['L', 'M', 'Me', 'J', 'V', 'S', 'D'];
         const ACTIVITIES = [
             { key: 'sleep',  label: 'Sommeil', color: '#5c6bc0' },
@@ -448,36 +488,14 @@ class TimeProgressApp {
             { key: 'empty',  label: 'Effacer', color: 'rgba(255,255,255,0.08)' },
         ];
 
-        // Init schedule data once (sport 6-7 ajouté pour tous les jours)
-        if (!this.scheduleData) {
-            this.scheduleData = [
-                // L: 0-5 sleep | 6 sport | 7-8 family | 9-17 work | 18-20 family | 21-23 sleep
-                ['sleep','sleep','sleep','sleep','sleep','sleep','sport','family','family','work','work','work','work','work','work','work','work','work','family','family','family','sleep','sleep','sleep'],
-                // M
-                ['sleep','sleep','sleep','sleep','sleep','sleep','sport','family','family','work','work','work','work','work','work','work','work','work','family','family','family','sleep','sleep','sleep'],
-                // Me
-                ['sleep','sleep','sleep','sleep','sleep','sleep','sport','family','family','work','work','work','work','work','work','work','work','work','family','family','family','sleep','sleep','sleep'],
-                // J
-                ['sleep','sleep','sleep','sleep','sleep','sleep','sport','family','family','work','work','work','work','work','work','work','work','work','family','family','family','sleep','sleep','sleep'],
-                // V
-                ['sleep','sleep','sleep','sleep','sleep','sleep','sport','family','family','work','work','work','work','work','work','work','work','work','family','family','family','sleep','sleep','sleep'],
-                // S: 0-5 sleep | 6 sport | 7-8 sleep | 9-11 sport | 12-20 work | 21-23 sleep
-                ['sleep','sleep','sleep','sleep','sleep','sleep','sport','sleep','sleep','sport','sport','sport','work','work','work','work','work','work','work','work','work','sleep','sleep','sleep'],
-                // D: 0-5 sleep | 6 sport | 7-8 sleep | 9-11 sport | 12-20 family | 21-23 sleep
-                ['sleep','sleep','sleep','sleep','sleep','sleep','sport','sleep','sleep','sport','sport','sport','family','family','family','family','family','family','family','family','family','sleep','sleep','sleep'],
-            ];
-            this.selectedActivity = 'work';
-            this.saveSchedule();
-        }
+        if (!this.selectedActivity) this.selectedActivity = 'work';
 
-        // Toolbar
         this.planningToolbar.innerHTML = ACTIVITIES.map(a =>
             `<button class="planning-tool-btn ${this.selectedActivity === a.key ? 'active' : ''}" data-activity="${a.key}">
                 <span class="tool-dot" style="background:${a.color}"></span>${a.label}
             </button>`
         ).join('');
 
-        // Grid
         let html = '<div class="planning-hour-label"></div>';
         for (let h = 0; h < 24; h++) {
             html += `<div class="planning-hour-label">${h}</div>`;
@@ -490,6 +508,91 @@ class TimeProgressApp {
         });
         this.planningGrid.innerHTML = html;
         this.renderPlanningStats();
+    }
+
+    renderPlanningSelector() {
+        const current = this.plannings.find(p => p.id === this.currentPlanningId);
+        this.planningSelectorBar.innerHTML = `
+            <select class="planning-select" id="planningSelect">
+                ${this.plannings.map(p =>
+                    `<option value="${p.id}" ${p.id === this.currentPlanningId ? 'selected' : ''}>${p.name}</option>`
+                ).join('')}
+            </select>
+            <button class="planning-new-btn" id="planningNewBtn">+ Nouveau</button>
+            <button class="planning-delete-btn" id="planningDeleteBtn" title="Supprimer ce planning">🗑</button>
+            <div class="planning-new-form" id="planningNewForm">
+                <input class="planning-name-input" id="planningNameInput" type="text" placeholder="Nom du planning...">
+                <button class="planning-create-btn" id="planningCreateBtn">Créer</button>
+                <button class="planning-cancel-btn" id="planningCancelBtn">×</button>
+            </div>`;
+
+        document.getElementById('planningSelect').addEventListener('change', (e) => {
+            this.switchPlanning(e.target.value);
+        });
+        document.getElementById('planningDeleteBtn').addEventListener('click', () => {
+            if (confirm(`Supprimer "${current?.name}" ?`)) this.deletePlanning(this.currentPlanningId);
+        });
+        document.getElementById('planningNewBtn').addEventListener('click', () => {
+            const form = document.getElementById('planningNewForm');
+            form.style.display = form.style.display === 'flex' ? 'none' : 'flex';
+            document.getElementById('planningNameInput').focus();
+        });
+        this._bindNewForm();
+    }
+
+    _bindNewForm() {
+        const createBtn = document.getElementById('planningCreateBtn');
+        const cancelBtn = document.getElementById('planningCancelBtn');
+        const input = document.getElementById('planningNameInput');
+        if (createBtn) createBtn.addEventListener('click', () => {
+            const name = input.value.trim();
+            if (name) this.createPlanning(name);
+        });
+        if (cancelBtn) cancelBtn.addEventListener('click', () => {
+            document.getElementById('planningNewForm').style.display = 'none';
+        });
+        if (input) input.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') { const name = e.target.value.trim(); if (name) this.createPlanning(name); }
+        });
+    }
+
+    switchPlanning(id) {
+        const planning = this.plannings.find(p => p.id === id);
+        if (!planning) return;
+        this.currentPlanningId = id;
+        this.scheduleData = planning.schedule;
+        this.renderPlanningView();
+    }
+
+    async createPlanning(name) {
+        try {
+            const schedule = defaultSchedule();
+            const data = { userId: this.userId, name, schedule, createdAt: Date.now() };
+            const ref = await addDoc(collection(db, 'planning'), data);
+            this.plannings.push({ id: ref.id, ...data });
+            this.currentPlanningId = ref.id;
+            this.scheduleData = schedule;
+            this.renderPlanningView();
+        } catch (e) {
+            console.error('Erreur création planning:', e);
+        }
+    }
+
+    async deletePlanning(id) {
+        try {
+            await deleteDoc(doc(db, 'planning', id));  // deleteDoc already imported
+            this.plannings = this.plannings.filter(p => p.id !== id);
+            if (this.plannings.length > 0) {
+                this.currentPlanningId = this.plannings[0].id;
+                this.scheduleData = this.plannings[0].schedule;
+            } else {
+                this.currentPlanningId = null;
+                this.scheduleData = null;
+            }
+            this.renderPlanningView();
+        } catch (e) {
+            console.error('Erreur suppression planning:', e);
+        }
     }
 
     renderPlanningStats() {
@@ -517,31 +620,41 @@ class TimeProgressApp {
         }).join('');
     }
 
-    async loadSchedule() {
+    async loadAllPlannings() {
         try {
             const q = query(collection(db, 'planning'), where('userId', '==', this.userId));
             const snapshot = await getDocs(q);
-            if (!snapshot.empty) {
-                const docData = snapshot.docs[0];
-                this.scheduleData = docData.data().schedule;
-                this.scheduleDocId = docData.id;
+            this.plannings = snapshot.docs.map((d, i) => ({
+                id: d.id,
+                name: d.data().name || `Planning ${i + 1}`,
+                ...d.data()
+            }));
+            this.plannings.sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0));
+            if (this.plannings.length > 0) {
+                this.currentPlanningId = this.plannings[0].id;
+                this.scheduleData = this.plannings[0].schedule;
             }
         } catch (e) {
-            console.error('Erreur chargement planning:', e);
+            console.error('Erreur chargement plannings:', e);
+            this.plannings = [];
         }
     }
 
     saveSchedule() {
+        if (!this.currentPlanningId || !this.scheduleData) return;
         if (this.saveScheduleTimeout) clearTimeout(this.saveScheduleTimeout);
         this.saveScheduleTimeout = setTimeout(async () => {
             try {
-                const data = { userId: this.userId, schedule: this.scheduleData };
-                if (this.scheduleDocId) {
-                    await setDoc(doc(db, 'planning', this.scheduleDocId), data);
-                } else {
-                    const ref = await addDoc(collection(db, 'planning'), data);
-                    this.scheduleDocId = ref.id;
-                }
+                const planning = this.plannings.find(p => p.id === this.currentPlanningId);
+                const data = {
+                    userId: this.userId,
+                    name: planning?.name || 'Planning',
+                    schedule: this.scheduleData,
+                    createdAt: planning?.createdAt || Date.now()
+                };
+                await setDoc(doc(db, 'planning', this.currentPlanningId), data);
+                const idx = this.plannings.findIndex(p => p.id === this.currentPlanningId);
+                if (idx >= 0) this.plannings[idx].schedule = this.scheduleData;
             } catch (e) {
                 console.error('Erreur sauvegarde planning:', e);
             }
