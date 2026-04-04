@@ -1,4 +1,4 @@
-const CACHE_NAME = 'time-progress-v1';
+const CACHE_NAME = 'time-progress-v2';
 const urlsToCache = [
   '/',
   '/index.html',
