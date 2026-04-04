@@ -202,6 +202,14 @@ function defaultSchedule() {
     ];
 }
 
+// Firestore n'accepte pas les tableaux 2D — on aplatit en 168 valeurs
+function flattenSchedule(s) { return s.flat(); }
+function restoreSchedule(flat) {
+    const days = [];
+    for (let i = 0; i < 7; i++) days.push(flat.slice(i * 24, (i + 1) * 24));
+    return days;
+}
+
 // Classe pour gérer l'application
 class TimeProgressApp {
     constructor() {
@@ -571,7 +579,7 @@ class TimeProgressApp {
         if (createBtn) { createBtn.disabled = true; createBtn.textContent = '...'; }
         try {
             const schedule = defaultSchedule();
-            const data = { userId: this.userId, name, schedule, createdAt: Date.now() };
+            const data = { userId: this.userId, name, schedule: flattenSchedule(schedule), createdAt: Date.now() };
             const ref = await addDoc(collection(db, 'planning'), data);
             this.plannings.push({ id: ref.id, ...data });
             this.currentPlanningId = ref.id;
@@ -633,11 +641,17 @@ class TimeProgressApp {
         try {
             const q = query(collection(db, 'planning'), where('userId', '==', this.userId));
             const snapshot = await getDocs(q);
-            this.plannings = snapshot.docs.map((d, i) => ({
-                id: d.id,
-                name: d.data().name || `Planning ${i + 1}`,
-                ...d.data()
-            }));
+            this.plannings = snapshot.docs.map((d, i) => {
+                const data = d.data();
+                const raw = data.schedule || [];
+                return {
+                    id: d.id,
+                    name: data.name || `Planning ${i + 1}`,
+                    createdAt: data.createdAt,
+                    userId: data.userId,
+                    schedule: Array.isArray(raw[0]) ? raw : restoreSchedule(raw),
+                };
+            });
             this.plannings.sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0));
             if (this.plannings.length > 0) {
                 this.currentPlanningId = this.plannings[0].id;
@@ -662,7 +676,7 @@ class TimeProgressApp {
                 const data = {
                     userId: this.userId,
                     name: planning?.name || 'Planning',
-                    schedule: this.scheduleData,
+                    schedule: flattenSchedule(this.scheduleData),
                     createdAt: planning?.createdAt || Date.now()
                 };
                 await setDoc(doc(db, 'planning', this.currentPlanningId), data);
