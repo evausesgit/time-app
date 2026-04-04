@@ -464,7 +464,7 @@ class TimeProgressApp {
             this.planningSelectorBar.innerHTML = `
                 <div class="planning-empty-state">
                     <p>Aucun planning sauvegardé.</p>
-                    <div class="planning-new-form" id="planningNewForm" style="display:flex">
+                    <div class="planning-new-form" style="display:flex">
                         <input class="planning-name-input" id="planningNameInput" type="text" placeholder="Nom du planning...">
                         <button class="planning-create-btn" id="planningCreateBtn">Créer</button>
                     </div>
@@ -472,7 +472,11 @@ class TimeProgressApp {
             this.planningToolbar.innerHTML = '';
             this.planningGrid.innerHTML = '';
             this.planningStats.innerHTML = '';
-            this._bindNewForm();
+            const input = document.getElementById('planningNameInput');
+            const createBtn = document.getElementById('planningCreateBtn');
+            const doCreate = () => { const name = input.value.trim(); if (name) this.createPlanning(name); };
+            createBtn.onclick = doCreate;
+            input.onkeydown = (e) => { if (e.key === 'Enter') doCreate(); };
             return;
         }
 
@@ -511,7 +515,7 @@ class TimeProgressApp {
     }
 
     renderPlanningSelector() {
-        const current = this.plannings.find(p => p.id === this.currentPlanningId);
+        const currentName = this.plannings.find(p => p.id === this.currentPlanningId)?.name || '';
         this.planningSelectorBar.innerHTML = `
             <select class="planning-select" id="planningSelect">
                 ${this.plannings.map(p =>
@@ -519,41 +523,39 @@ class TimeProgressApp {
                 ).join('')}
             </select>
             <button class="planning-new-btn" id="planningNewBtn">+ Nouveau</button>
-            <button class="planning-delete-btn" id="planningDeleteBtn" title="Supprimer ce planning">🗑</button>
-            <div class="planning-new-form" id="planningNewForm">
+            <button class="planning-delete-btn" id="planningDeleteBtn" title="Supprimer">🗑</button>
+            <div class="planning-new-form" id="planningNewForm" style="display:none">
                 <input class="planning-name-input" id="planningNameInput" type="text" placeholder="Nom du planning...">
                 <button class="planning-create-btn" id="planningCreateBtn">Créer</button>
                 <button class="planning-cancel-btn" id="planningCancelBtn">×</button>
             </div>`;
 
-        document.getElementById('planningSelect').addEventListener('change', (e) => {
-            this.switchPlanning(e.target.value);
-        });
-        document.getElementById('planningDeleteBtn').addEventListener('click', () => {
-            if (confirm(`Supprimer "${current?.name}" ?`)) this.deletePlanning(this.currentPlanningId);
-        });
-        document.getElementById('planningNewBtn').addEventListener('click', () => {
-            const form = document.getElementById('planningNewForm');
-            form.style.display = form.style.display === 'flex' ? 'none' : 'flex';
-            document.getElementById('planningNameInput').focus();
-        });
-        this._bindNewForm();
-    }
-
-    _bindNewForm() {
+        const sel = document.getElementById('planningSelect');
+        const newBtn = document.getElementById('planningNewBtn');
+        const delBtn = document.getElementById('planningDeleteBtn');
+        const form = document.getElementById('planningNewForm');
+        const input = document.getElementById('planningNameInput');
         const createBtn = document.getElementById('planningCreateBtn');
         const cancelBtn = document.getElementById('planningCancelBtn');
-        const input = document.getElementById('planningNameInput');
-        if (createBtn) createBtn.addEventListener('click', () => {
+
+        sel.onchange = (e) => this.switchPlanning(e.target.value);
+
+        delBtn.onclick = () => {
+            if (confirm(`Supprimer "${currentName}" ?`)) this.deletePlanning(this.currentPlanningId);
+        };
+
+        newBtn.onclick = () => {
+            form.style.display = form.style.display === 'flex' ? 'none' : 'flex';
+            if (form.style.display === 'flex') input.focus();
+        };
+
+        const doCreate = () => {
             const name = input.value.trim();
             if (name) this.createPlanning(name);
-        });
-        if (cancelBtn) cancelBtn.addEventListener('click', () => {
-            document.getElementById('planningNewForm').style.display = 'none';
-        });
-        if (input) input.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') { const name = e.target.value.trim(); if (name) this.createPlanning(name); }
-        });
+        };
+        createBtn.onclick = doCreate;
+        cancelBtn.onclick = () => { form.style.display = 'none'; input.value = ''; };
+        input.onkeydown = (e) => { if (e.key === 'Enter') doCreate(); };
     }
 
     switchPlanning(id) {
@@ -565,6 +567,8 @@ class TimeProgressApp {
     }
 
     async createPlanning(name) {
+        const createBtn = document.getElementById('planningCreateBtn');
+        if (createBtn) { createBtn.disabled = true; createBtn.textContent = '...'; }
         try {
             const schedule = defaultSchedule();
             const data = { userId: this.userId, name, schedule, createdAt: Date.now() };
@@ -575,6 +579,11 @@ class TimeProgressApp {
             this.renderPlanningView();
         } catch (e) {
             console.error('Erreur création planning:', e);
+            if (createBtn) { createBtn.disabled = false; createBtn.textContent = 'Créer'; }
+            const errEl = document.createElement('span');
+            errEl.style.cssText = 'color:#d63031;font-size:0.8rem;width:100%;text-align:center;margin-top:4px';
+            errEl.textContent = `Erreur : ${e.message}`;
+            document.getElementById('planningNewForm')?.appendChild(errEl);
         }
     }
 
@@ -637,6 +646,10 @@ class TimeProgressApp {
         } catch (e) {
             console.error('Erreur chargement plannings:', e);
             this.plannings = [];
+        }
+        // Re-render si l'onglet Planning est déjà affiché
+        if (this.currentFilter === 'planning') {
+            this.renderPlanningView();
         }
     }
 
