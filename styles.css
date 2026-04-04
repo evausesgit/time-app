@@ -419,6 +419,47 @@ body {
     font-size: 0.9rem;
 }
 
+.planning-add-cat-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: 2px dashed rgba(255,255,255,0.25);
+    background: transparent;
+    color: var(--text-secondary);
+    font-size: 1.3rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.planning-add-cat-btn:hover {
+    border-color: var(--primary-color);
+    color: var(--primary-color);
+}
+
+.planning-add-cat-form {
+    display: none;
+    align-items: center;
+    gap: 6px;
+    width: 100%;
+    justify-content: center;
+    margin-top: 8px;
+    flex-wrap: wrap;
+}
+
+.cat-color-input {
+    width: 36px;
+    height: 36px;
+    border: none;
+    border-radius: 8px;
+    padding: 2px;
+    background: none;
+    cursor: pointer;
+}
+
 .planning-empty-state {
     text-align: center;
     padding: 40px 20px;

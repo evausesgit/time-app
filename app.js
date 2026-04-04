@@ -492,21 +492,51 @@ class TimeProgressApp {
         if (!this.scheduleData) return;
 
         const DAYS = ['L', 'M', 'Me', 'J', 'V', 'S', 'D'];
-        const ACTIVITIES = [
+        const DEFAULT_ACTIVITIES = [
             { key: 'sleep',  label: 'Sommeil', color: '#5c6bc0' },
             { key: 'sport',  label: 'Sport',   color: '#e53935' },
             { key: 'family', label: 'Famille', color: '#66bb6a' },
             { key: 'work',   label: 'Travail', color: '#ffa726' },
-            { key: 'empty',  label: 'Effacer', color: 'rgba(255,255,255,0.08)' },
         ];
+        const customCats = this.plannings.find(p => p.id === this.currentPlanningId)?.categories || [];
+        const allActivities = [...DEFAULT_ACTIVITIES, ...customCats];
+        const eraser = { key: 'empty', label: 'Effacer', color: 'rgba(255,255,255,0.08)' };
 
         if (!this.selectedActivity) this.selectedActivity = 'work';
+        this.injectCategoryStyles(customCats);
 
-        this.planningToolbar.innerHTML = ACTIVITIES.map(a =>
-            `<button class="planning-tool-btn ${this.selectedActivity === a.key ? 'active' : ''}" data-activity="${a.key}">
-                <span class="tool-dot" style="background:${a.color}"></span>${a.label}
-            </button>`
-        ).join('');
+        this.planningToolbar.innerHTML =
+            [...allActivities, eraser].map(a =>
+                `<button class="planning-tool-btn ${this.selectedActivity === a.key ? 'active' : ''}" data-activity="${a.key}">
+                    <span class="tool-dot" style="background:${a.color}"></span>${a.label}
+                </button>`
+            ).join('') +
+            `<button class="planning-add-cat-btn" id="planningAddCatBtn" title="Nouvelle catégorie">+</button>
+             <div class="planning-add-cat-form" id="planningAddCatForm" style="display:none">
+                 <input class="planning-name-input" id="catNameInput" type="text" placeholder="Nom..." style="width:110px">
+                 <input type="color" id="catColorInput" value="#9b59b6" class="cat-color-input">
+                 <button class="planning-create-btn" id="catAddBtn">Ajouter</button>
+                 <button class="planning-cancel-btn" id="catCancelBtn">×</button>
+             </div>`;
+
+        const addCatBtn = document.getElementById('planningAddCatBtn');
+        const addCatForm = document.getElementById('planningAddCatForm');
+        const catNameInput = document.getElementById('catNameInput');
+        const catColorInput = document.getElementById('catColorInput');
+        const catAddBtn = document.getElementById('catAddBtn');
+        const catCancelBtn = document.getElementById('catCancelBtn');
+
+        addCatBtn.onclick = () => {
+            addCatForm.style.display = addCatForm.style.display === 'flex' ? 'none' : 'flex';
+            if (addCatForm.style.display === 'flex') catNameInput.focus();
+        };
+        catCancelBtn.onclick = () => { addCatForm.style.display = 'none'; catNameInput.value = ''; };
+        const doAddCat = () => {
+            const label = catNameInput.value.trim();
+            if (label) this.addCategory(label, catColorInput.value);
+        };
+        catAddBtn.onclick = doAddCat;
+        catNameInput.onkeydown = (e) => { if (e.key === 'Enter') doAddCat(); };
 
         let html = '<div class="planning-hour-label"></div>';
         for (let h = 0; h < 24; h++) {
@@ -520,6 +550,29 @@ class TimeProgressApp {
         });
         this.planningGrid.innerHTML = html;
         this.renderPlanningStats();
+    }
+
+    injectCategoryStyles(customCats) {
+        let style = document.getElementById('planning-dynamic-styles');
+        if (!style) {
+            style = document.createElement('style');
+            style.id = 'planning-dynamic-styles';
+            document.head.appendChild(style);
+        }
+        style.textContent = customCats.map(c =>
+            `.planning-cell.${c.key} { background: ${c.color}; }`
+        ).join('\n');
+    }
+
+    async addCategory(label, color) {
+        const key = 'cat_' + Date.now();
+        const newCat = { key, label, color };
+        const planning = this.plannings.find(p => p.id === this.currentPlanningId);
+        if (!planning) return;
+        planning.categories = [...(planning.categories || []), newCat];
+        this.selectedActivity = key;
+        this.renderPlanningView();
+        this.saveSchedule();
     }
 
     renderPlanningSelector() {
@@ -579,7 +632,7 @@ class TimeProgressApp {
         if (createBtn) { createBtn.disabled = true; createBtn.textContent = '...'; }
         try {
             const schedule = defaultSchedule();
-            const data = { userId: this.userId, name, schedule: flattenSchedule(schedule), createdAt: Date.now() };
+            const data = { userId: this.userId, name, schedule: flattenSchedule(schedule), categories: [], createdAt: Date.now() };
             const ref = await addDoc(collection(db, 'planning'), data);
             this.plannings.push({ id: ref.id, ...data });
             this.currentPlanningId = ref.id;
@@ -613,11 +666,13 @@ class TimeProgressApp {
     }
 
     renderPlanningStats() {
+        const customCats = this.plannings.find(p => p.id === this.currentPlanningId)?.categories || [];
         const ACTIVITIES = [
             { key: 'sleep',  label: 'Sommeil', color: '#5c6bc0' },
             { key: 'sport',  label: 'Sport',   color: '#e53935' },
             { key: 'family', label: 'Famille', color: '#66bb6a' },
             { key: 'work',   label: 'Travail', color: '#ffa726' },
+            ...customCats,
         ];
         const total = 7 * 24;
         const counts = {};
@@ -650,6 +705,7 @@ class TimeProgressApp {
                     createdAt: data.createdAt,
                     userId: data.userId,
                     schedule: Array.isArray(raw[0]) ? raw : restoreSchedule(raw),
+                    categories: data.categories || [],
                 };
             });
             this.plannings.sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0));
@@ -677,6 +733,7 @@ class TimeProgressApp {
                     userId: this.userId,
                     name: planning?.name || 'Planning',
                     schedule: flattenSchedule(this.scheduleData),
+                    categories: planning?.categories || [],
                     createdAt: planning?.createdAt || Date.now()
                 };
                 await setDoc(doc(db, 'planning', this.currentPlanningId), data);
