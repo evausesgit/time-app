@@ -552,6 +552,24 @@ class TimeProgressApp {
         this.renderPlanningStats();
     }
 
+    async renamePlanning(id, name) {
+        const planning = this.plannings.find(p => p.id === id);
+        if (!planning) return;
+        planning.name = name;
+        try {
+            await setDoc(doc(db, 'planning', id), {
+                userId: this.userId,
+                name,
+                schedule: flattenSchedule(planning.schedule),
+                categories: planning.categories || [],
+                createdAt: planning.createdAt
+            });
+        } catch (e) {
+            console.error('Erreur renommage planning:', e);
+        }
+        this.renderPlanningView();
+    }
+
     injectCategoryStyles(customCats) {
         let style = document.getElementById('planning-dynamic-styles');
         if (!style) {
@@ -583,8 +601,14 @@ class TimeProgressApp {
                     `<option value="${p.id}" ${p.id === this.currentPlanningId ? 'selected' : ''}>${p.name}</option>`
                 ).join('')}
             </select>
+            <button class="planning-rename-btn" id="planningRenameBtn" title="Renommer">✏️</button>
             <button class="planning-new-btn" id="planningNewBtn">+ Nouveau</button>
             <button class="planning-delete-btn" id="planningDeleteBtn" title="Supprimer">🗑</button>
+            <div class="planning-new-form" id="planningRenameForm" style="display:none">
+                <input class="planning-name-input" id="planningRenameInput" type="text" placeholder="Nouveau nom..." value="${currentName}">
+                <button class="planning-create-btn" id="planningRenameConfirm">Renommer</button>
+                <button class="planning-cancel-btn" id="planningRenameCancel">×</button>
+            </div>
             <div class="planning-new-form" id="planningNewForm" style="display:none">
                 <input class="planning-name-input" id="planningNameInput" type="text" placeholder="Nom du planning...">
                 <button class="planning-create-btn" id="planningCreateBtn">Créer</button>
@@ -592,6 +616,11 @@ class TimeProgressApp {
             </div>`;
 
         const sel = document.getElementById('planningSelect');
+        const renameBtn = document.getElementById('planningRenameBtn');
+        const renameForm = document.getElementById('planningRenameForm');
+        const renameInput = document.getElementById('planningRenameInput');
+        const renameConfirm = document.getElementById('planningRenameConfirm');
+        const renameCancel = document.getElementById('planningRenameCancel');
         const newBtn = document.getElementById('planningNewBtn');
         const delBtn = document.getElementById('planningDeleteBtn');
         const form = document.getElementById('planningNewForm');
@@ -600,6 +629,19 @@ class TimeProgressApp {
         const cancelBtn = document.getElementById('planningCancelBtn');
 
         sel.onchange = (e) => this.switchPlanning(e.target.value);
+
+        renameBtn.onclick = () => {
+            renameForm.style.display = renameForm.style.display === 'flex' ? 'none' : 'flex';
+            if (renameForm.style.display === 'flex') { renameInput.focus(); renameInput.select(); }
+        };
+        const doRename = () => {
+            const name = renameInput.value.trim();
+            if (name && name !== currentName) this.renamePlanning(this.currentPlanningId, name);
+            else renameForm.style.display = 'none';
+        };
+        renameConfirm.onclick = doRename;
+        renameCancel.onclick = () => { renameForm.style.display = 'none'; };
+        renameInput.onkeydown = (e) => { if (e.key === 'Enter') doRename(); if (e.key === 'Escape') renameCancel.onclick(); };
 
         delBtn.onclick = () => {
             if (confirm(`Supprimer "${currentName}" ?`)) this.deletePlanning(this.currentPlanningId);

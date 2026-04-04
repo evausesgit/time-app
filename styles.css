@@ -360,6 +360,20 @@ body {
     color: white;
 }
 
+.planning-rename-btn {
+    padding: 8px 10px;
+    border: 2px solid rgba(255,255,255,0.1);
+    border-radius: 10px;
+    background: transparent;
+    cursor: pointer;
+    font-size: 0.85rem;
+    transition: all 0.2s;
+}
+
+.planning-rename-btn:hover {
+    border-color: rgba(255,255,255,0.3);
+}
+
 .planning-delete-btn {
     padding: 8px 12px;
     border: 2px solid rgba(214, 48, 49, 0.4);
