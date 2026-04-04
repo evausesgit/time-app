@@ -411,6 +411,54 @@ body {
 .planning-cell.work   { background: #ffa726; }
 .planning-cell.empty  { background: rgba(255,255,255,0.04); }
 
+.planning-stats {
+    margin-top: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    max-width: 400px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.planning-stat-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.planning-stat-label {
+    width: 70px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-align: right;
+    flex-shrink: 0;
+}
+
+.planning-stat-bar-bg {
+    flex: 1;
+    height: 10px;
+    background: rgba(255,255,255,0.07);
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+.planning-stat-bar {
+    height: 100%;
+    border-radius: 6px;
+    transition: width 0.4s ease;
+}
+
+.planning-stat-pct {
+    width: 38px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    text-align: right;
+    flex-shrink: 0;
+}
+
 /* Grille des timers */
 .timers-grid {
     margin-top: 0;

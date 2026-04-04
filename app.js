@@ -220,6 +220,7 @@ class TimeProgressApp {
         this.planningView = document.getElementById('planningView');
         this.planningGrid = document.getElementById('planningGrid');
         this.planningToolbar = document.getElementById('planningToolbar');
+        this.planningStats = document.getElementById('planningStats');
         this.tabsContainer = document.getElementById('tabsContainer');
         this.tabButtons = this.tabsContainer.querySelectorAll('.tab-btn');
 
@@ -367,6 +368,7 @@ class TimeProgressApp {
             if (isNaN(day) || isNaN(hour)) return;
             this.scheduleData[day][hour] = this.selectedActivity;
             el.className = `planning-cell ${this.selectedActivity}`;
+            this.renderPlanningStats();
             this.saveSchedule();
         };
         this.planningGrid.addEventListener('mousedown', (e) => {
@@ -487,6 +489,32 @@ class TimeProgressApp {
             });
         });
         this.planningGrid.innerHTML = html;
+        this.renderPlanningStats();
+    }
+
+    renderPlanningStats() {
+        const ACTIVITIES = [
+            { key: 'sleep',  label: 'Sommeil', color: '#5c6bc0' },
+            { key: 'sport',  label: 'Sport',   color: '#e53935' },
+            { key: 'family', label: 'Famille', color: '#66bb6a' },
+            { key: 'work',   label: 'Travail', color: '#ffa726' },
+        ];
+        const total = 7 * 24;
+        const counts = {};
+        ACTIVITIES.forEach(a => counts[a.key] = 0);
+        this.scheduleData.forEach(day => day.forEach(cell => {
+            if (counts[cell] !== undefined) counts[cell]++;
+        }));
+        this.planningStats.innerHTML = ACTIVITIES.map(a => {
+            const pct = Math.round(counts[a.key] / total * 100);
+            return `<div class="planning-stat-row">
+                <span class="planning-stat-label">${a.label}</span>
+                <div class="planning-stat-bar-bg">
+                    <div class="planning-stat-bar" style="width:${pct}%;background:${a.color}"></div>
+                </div>
+                <span class="planning-stat-pct">${pct}%</span>
+            </div>`;
+        }).join('');
     }
 
     async loadSchedule() {
