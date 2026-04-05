@@ -667,6 +667,7 @@ class TimeProgressApp {
         this.currentPlanningId = id;
         this.scheduleData = planning.schedule;
         this.statsEnabledKeys = null;
+        this.statsKnownKeys = null;
         this.renderPlanningView();
     }
 
@@ -720,11 +721,13 @@ class TimeProgressApp {
 
         if (!this.statsEnabledKeys) {
             this.statsEnabledKeys = new Set(ACTIVITIES.map(a => a.key));
+            this.statsKnownKeys = new Set(ACTIVITIES.map(a => a.key));
         } else {
-            // Ajouter les nouvelles catégories comme activées par défaut
+            // Ajouter uniquement les catégories vraiment nouvelles (jamais vues)
             ACTIVITIES.forEach(a => {
-                if (!this.statsEnabledKeys.has(a.key)) {
+                if (!this.statsKnownKeys.has(a.key)) {
                     this.statsEnabledKeys.add(a.key);
+                    this.statsKnownKeys.add(a.key);
                 }
             });
         }
