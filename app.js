@@ -666,6 +666,7 @@ class TimeProgressApp {
         if (!planning) return;
         this.currentPlanningId = id;
         this.scheduleData = planning.schedule;
+        this.statsEnabledKeys = null;
         this.renderPlanningView();
     }
 
@@ -716,22 +717,57 @@ class TimeProgressApp {
             { key: 'work',   label: 'Travail', color: '#ffa726' },
             ...customCats,
         ];
-        const total = 7 * 24;
+
+        if (!this.statsEnabledKeys) {
+            this.statsEnabledKeys = new Set(ACTIVITIES.map(a => a.key));
+        } else {
+            // Ajouter les nouvelles catégories comme activées par défaut
+            ACTIVITIES.forEach(a => {
+                if (!this.statsEnabledKeys.has(a.key)) {
+                    this.statsEnabledKeys.add(a.key);
+                }
+            });
+        }
+
         const counts = {};
         ACTIVITIES.forEach(a => counts[a.key] = 0);
         this.scheduleData.forEach(day => day.forEach(cell => {
             if (counts[cell] !== undefined) counts[cell]++;
         }));
+
+        const enabledKeys = this.statsEnabledKeys;
+        const includedTotal = ACTIVITIES
+            .filter(a => enabledKeys.has(a.key))
+            .reduce((sum, a) => sum + counts[a.key], 0);
+        const divisor = includedTotal > 0 ? includedTotal : 1;
+
         this.planningStats.innerHTML = ACTIVITIES.map(a => {
-            const pct = Math.round(counts[a.key] / total * 100);
-            return `<div class="planning-stat-row">
+            const enabled = enabledKeys.has(a.key);
+            const pct = enabled ? Math.round(counts[a.key] / divisor * 100) : 0;
+            return `<div class="planning-stat-row${enabled ? '' : ' stat-disabled'}">
+                <label class="stat-checkbox-label">
+                    <input type="checkbox" class="stat-checkbox" data-key="${a.key}" ${enabled ? 'checked' : ''}>
+                    <span class="stat-checkbox-custom" style="border-color:${a.color};${enabled ? `background:${a.color}` : ''}"></span>
+                </label>
                 <span class="planning-stat-label">${a.label}</span>
                 <div class="planning-stat-bar-bg">
                     <div class="planning-stat-bar" style="width:${pct}%;background:${a.color}"></div>
                 </div>
-                <span class="planning-stat-pct">${pct}%</span>
+                <span class="planning-stat-pct">${enabled ? pct + '%' : '—'}</span>
             </div>`;
         }).join('');
+
+        this.planningStats.querySelectorAll('.stat-checkbox').forEach(cb => {
+            cb.addEventListener('change', e => {
+                const key = e.target.dataset.key;
+                if (e.target.checked) {
+                    this.statsEnabledKeys.add(key);
+                } else {
+                    this.statsEnabledKeys.delete(key);
+                }
+                this.renderPlanningStats();
+            });
+        });
     }
 
     async loadAllPlannings() {
