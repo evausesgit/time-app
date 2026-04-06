@@ -195,18 +195,20 @@ class TimerGroup {
 }
 
 function defaultSchedule() {
-    const wd = () => ['sleep','sleep','sleep','sleep','sleep','sleep','sport','family','family','work','work','work','work','work','work','work','work','work','family','family','family','sleep','sleep','sleep'];
+    const wd = () => ['sleep','sleep','sleep','sleep','sleep','sleep','sport','family','family','work','work','work','work','work','work','work','work','work','family','family','family','sleep','sleep','sleep'].flatMap(v => [v, v]);
     return [wd(), wd(), wd(), wd(), wd(),
-        ['sleep','sleep','sleep','sleep','sleep','sleep','sport','sleep','sleep','sport','sport','sport','work','work','work','work','work','work','work','work','work','sleep','sleep','sleep'],
-        ['sleep','sleep','sleep','sleep','sleep','sleep','sport','sleep','sleep','sport','sport','sport','family','family','family','family','family','family','family','family','family','sleep','sleep','sleep'],
+        ['sleep','sleep','sleep','sleep','sleep','sleep','sport','sleep','sleep','sport','sport','sport','work','work','work','work','work','work','work','work','work','sleep','sleep','sleep'].flatMap(v => [v, v]),
+        ['sleep','sleep','sleep','sleep','sleep','sleep','sport','sleep','sleep','sport','sport','sport','family','family','family','family','family','family','family','family','family','sleep','sleep','sleep'].flatMap(v => [v, v]),
     ];
 }
 
-// Firestore n'accepte pas les tableaux 2D — on aplatit en 168 valeurs
+// Firestore n'accepte pas les tableaux 2D — on aplatit en 336 valeurs (7j × 48 slots × 30min)
 function flattenSchedule(s) { return s.flat(); }
 function restoreSchedule(flat) {
+    // Migration: anciens plannings avaient 7×24=168 valeurs, on les étend à 7×48=336
+    if (flat.length === 168) flat = flat.flatMap(v => [v, v]);
     const days = [];
-    for (let i = 0; i < 7; i++) days.push(flat.slice(i * 24, (i + 1) * 24));
+    for (let i = 0; i < 7; i++) days.push(flat.slice(i * 48, (i + 1) * 48));
     return days;
 }
 
@@ -383,10 +385,10 @@ class TimeProgressApp {
         let painting = false;
         const paintCell = (el) => {
             const day = parseInt(el.dataset.day);
-            const hour = parseInt(el.dataset.hour);
-            if (isNaN(day) || isNaN(hour)) return;
-            this.scheduleData[day][hour] = this.selectedActivity;
-            el.className = `planning-cell ${this.selectedActivity}`;
+            const slot = parseInt(el.dataset.slot);
+            if (isNaN(day) || isNaN(slot)) return;
+            this.scheduleData[day][slot] = this.selectedActivity;
+            el.className = `planning-cell ${this.selectedActivity}${slot % 2 === 1 ? ' half-slot' : ''}`;
             this.renderPlanningStats();
             this.saveSchedule();
         };
@@ -539,13 +541,14 @@ class TimeProgressApp {
         catNameInput.onkeydown = (e) => { if (e.key === 'Enter') doAddCat(); };
 
         let html = '<div class="planning-hour-label"></div>';
-        for (let h = 0; h < 24; h++) {
-            html += `<div class="planning-hour-label">${h}</div>`;
+        for (let s = 0; s < 48; s++) {
+            const label = s % 2 === 0 ? `${s / 2}` : '';
+            html += `<div class="planning-hour-label${s % 2 === 1 ? ' half-hour' : ''}">${label}</div>`;
         }
         this.scheduleData.forEach((dayData, dayIndex) => {
             html += `<div class="planning-day-label">${DAYS[dayIndex]}</div>`;
-            dayData.forEach((activity, hour) => {
-                html += `<div class="planning-cell ${activity}" data-day="${dayIndex}" data-hour="${hour}"></div>`;
+            dayData.forEach((activity, slot) => {
+                html += `<div class="planning-cell ${activity}${slot % 2 === 1 ? ' half-slot' : ''}" data-day="${dayIndex}" data-slot="${slot}"></div>`;
             });
         });
         this.planningGrid.innerHTML = html;

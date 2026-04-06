@@ -535,19 +535,24 @@ body {
 
 .planning-grid {
     display: grid;
-    /* 1 col for day labels + 24 cols for hours */
-    grid-template-columns: 36px repeat(24, minmax(28px, 1fr));
-    gap: 2px;
-    min-width: 700px;
+    /* 1 col for day labels + 48 cols for half-hour slots */
+    grid-template-columns: 36px repeat(48, minmax(14px, 1fr));
+    gap: 1px;
+    min-width: 900px;
 }
 
 .planning-hour-label {
     grid-column: span 1;
-    font-size: 0.7rem;
+    font-size: 0.65rem;
     color: var(--text-secondary);
     text-align: center;
     padding: 4px 0;
     font-weight: 600;
+}
+
+.planning-hour-label.half-hour {
+    font-size: 0.55rem;
+    opacity: 0.5;
 }
 
 .planning-hour-label.row-start {
@@ -566,12 +571,16 @@ body {
 
 .planning-cell {
     height: 36px;
-    border-radius: 4px;
+    border-radius: 2px;
     transition: opacity 0.2s;
 }
 
+.planning-cell.half-slot {
+    opacity: 0.82;
+}
+
 .planning-cell:hover {
-    opacity: 0.8;
+    opacity: 0.7;
 }
 
 .planning-cell.sleep  { background: #5c6bc0; }
